@@ -7,7 +7,7 @@ import random
 import datetime
 import pickle
 
-# from progressbar import *
+from keras.utils.generic_utils import Progbar
 from PIL import Image
 
 os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
@@ -71,34 +71,6 @@ def get_train_batch():
 
     return B, L
 
-def get_test_batch():
-    index = 0
-
-    global current_index_test
-
-    B = np.zeros(shape=(batch_size, target_size, target_size, 3), dtype='uint8')
-    L = np.zeros(shape=(batch_size))
-
-    while index < batch_size and current_index_test < len(testing_images):
-        try:
-            img = load_img(testing_images[current_index_test], target_size=(target_size, target_size))
-            B[index] = img_to_array(img, dtype='uint8')
-            del(img)
-
-            L[index] = testing_labels[current_index_test]
-
-            index = index + 1
-            current_index_test = current_index_test + 1
-        except:
-            # print("Ignore image {}".format(testing_images[current_index_test]))
-            current_index_test = current_index_test + 1
-
-    if index < batch_size:
-        B = B[0:index, :, :, :]
-        L = L[0:index]
-
-    return B, L
-
 if __name__ == '__main__':
 
     
@@ -107,6 +79,7 @@ if __name__ == '__main__':
     parser.add_argument("-n", "--nsplit", type=int, help="number of partitions", default=400)
     parser.add_argument("-s", "--size", type=int, help="target size", default=224)
     parser.add_argument("-o", "--output", type=str, help="dir of output", required=True)
+    parser.add_argument("-m", "--mode", type=str, help="dir of output", default="train")
     args = parser.parse_args()
 
     train_dir = os.path.join(args.input, 'train')
@@ -159,14 +132,39 @@ if __name__ == '__main__':
 
     perm = list(range(len(training_images)))
 
-    batch_no = 0
-    current_index = 0
-    while batch_no < int(nice_n_train / batch_size):
-        [b, l] = get_train_batch()
-        output_train_filename = os.path.join(output_train_dir, "train_data_%03d.pkl" % batch_no)
-        print(b.shape)
-        print(l.shape)
-        print(output_train_filename, flush=True)
-        with open(output_train_filename, "wb") as f:
-            pickle.dump([b, l], f)
-        batch_no = batch_no + 1
+    if args.mode == "train":
+        print('mode: train', flush=True)
+        batch_no = 0
+        current_index = 0
+        while batch_no < int(nice_n_train / batch_size):
+            [b, l] = get_train_batch()
+            output_train_filename = os.path.join(output_train_dir, "train_data_%03d.pkl" % batch_no)
+            print(b.shape)
+            print(l.shape)
+            print(output_train_filename, flush=True)
+            with open(output_train_filename, "wb") as f:
+                pickle.dump([b, l], f)
+            batch_no = batch_no + 1
+    else:
+        print('mode: val', flush=True)
+        current_index_test = 0
+        n_testing_images = len(testing_images)
+
+        B = np.zeros(shape=(n_testing_images, target_size, target_size, 3), dtype='uint8')
+        L = np.zeros(shape=(n_testing_images))
+
+        pbar = Progbar(n_testing_images)
+        for current_index_test in range(n_testing_images):
+            img = load_img(testing_images[current_index_test], target_size=(target_size, target_size))
+            B[current_index_test] = img_to_array(img, dtype='uint8')
+            del(img)
+            L[current_index_test] = testing_labels[current_index_test]
+            if current_index_test % 100 == 0:
+                pbar.update(current_index_test)
+
+        output_test_filename = os.path.join(output_val_dir, "val_data.pkl")
+        print(B.shape)
+        print(L.shape)
+        print(output_test_filename, flush=True)
+        with open(output_test_filename, "wb") as f:
+            pickle.dump([B, L], f)

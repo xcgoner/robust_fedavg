@@ -140,7 +140,7 @@ if __name__ == '__main__':
     input_tensor = Input(shape=(160, 160, 3))
     model = MobileNetV2(alpha=0.75, weights=None, include_top=True, input_tensor=input_tensor)
     model.compile(loss      = 'categorical_crossentropy',
-                  optimizer = RMSprop(lr=0.045, momentum=0.9, decay = 0.00004),
+                  optimizer = RMSprop(lr=0.045, decay = 0.00004),
                   metrics   = ['accuracy'])
 
     batch_size = args.batchsize

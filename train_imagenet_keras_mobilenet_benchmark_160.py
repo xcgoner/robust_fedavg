@@ -111,6 +111,6 @@ if __name__ == '__main__':
 
         # validation
         [X, Y] = get_test_batch(val_dir)
-        [loss, accuracy] = model.train_on_batch(X, Y, batch_size=batch_size, epochs=1, verbose=1)
+        [loss, accuracy] = model.evaluate(X, Y, batch_size=batch_size, epochs=1, verbose=1)
         print("Cross entropy: %0.2f, accuracy: %0.2f" % (loss, accuracy))
         model.save(os.path.basename(__file__) +'.hdf5')

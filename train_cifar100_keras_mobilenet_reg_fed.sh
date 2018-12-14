@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l select=1:ncpus=272 -lplace=excl
+#PBS -l select=8:ncpus=272 -lplace=excl
 
 source /opt/intel/compilers_and_libraries_2017/linux/mpi/bin64/mpivars.sh
 source activate tensorflow_mpi
@@ -22,4 +22,4 @@ cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
 
 # cat $PBS_O_WORKDIR/hostfile
 
-mpirun -np 4 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_keras_mobilenet_reg_fed.py --nsplit 40 --batchsize 32 --lr 0.0001 --epochs 800 --dir /homes/cx2/datasets/cifar100 2>&1 | tee /homes/cx2/federated/results/train_cifar100_keras_mobilenet_reg_fed.log
+mpirun -np 16 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_keras_mobilenet_reg_fed.py --nsplit 40 --batchsize 16 --lr 0.001 --regularization 10 --epochs 800 --dir /homes/cx2/datasets/cifar100 2>&1 | tee /homes/cx2/federated/results/train_cifar100_keras_mobilenet_reg_fed.log

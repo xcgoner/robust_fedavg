@@ -60,6 +60,7 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--interval", type=int, help="log interval", default=10)
     parser.add_argument("-n", "--nsplit", type=int, help="number of split", default=40)
     parser.add_argument("-l", "--lr", type=float, help="learning rate", default=0.001)
+    parser.add_argument("-r", "--regularization", type=float, help="weight of regularization", default=0.00001)
     args = parser.parse_args()
 
     print(args, flush=True)
@@ -77,12 +78,12 @@ if __name__ == '__main__':
     num_classes = 100
     target_size = 32
     input_tensor = Input(shape=(target_size, target_size, 3))
-    model = MobileNetV2(alpha=0.75, weights=None, include_top=True, input_tensor=input_tensor, classes=num_classes)
+    model = MobileNetV2(alpha=0.25, weights=None, include_top=True, input_tensor=input_tensor, classes=num_classes)
     # model.compile(loss      = 'categorical_crossentropy',
     #               optimizer = RMSprop(lr=0.045, decay = 0.00004),
     #               metrics   = ['accuracy'])
     model.compile(loss      = 'categorical_crossentropy',
-                  optimizer = SGD(lr=0.01, momentum=0),
+                  optimizer = SGD(lr=args.lr/10, momentum=0),
                   metrics   = ['accuracy'])
     print(os.path.basename(__file__), flush=True)
     # model_checkpoint = ModelCheckpoint(os.path.basename(__file__) +'.hdf5', monitor='loss', save_best_only=True)
@@ -139,33 +140,34 @@ if __name__ == '__main__':
         pbar = Progbar(len(sub_training_files))
 
         for layer in model.layers:
-            layer.kernel_regularizer = new_regularizer(0.0001, layer.get_weights()) 
-        model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.01, momentum=0), metrics=['accuracy'])
+            layer.kernel_regularizer = new_regularizer(args.regularization, layer.get_weights()) 
+        model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=args.lr, momentum=0), metrics=['accuracy'])
 
         # train
-        for filename in sub_training_files:
-            [X, Y] = get_train_batch(filename)
-            model.fit(X, Y, batch_size=batch_size, epochs=1, verbose=2)
+        # for filename in sub_training_files:
+        #     [X, Y] = get_train_batch(filename)
+        #     # model.fit(X, Y, batch_size=batch_size, epochs=1, verbose=2)
+        #     model.fit(X, Y, batch_size=batch_size, epochs=1, verbose=0)
+        [X, Y] = get_train_batch(random.choice(sub_training_files))
+        model.fit(X, Y, batch_size=batch_size, epochs=1, verbose=0)
 
         for layer in model.layers:
             layer_weights = layer.get_weights()
             layer_weights_gathered = mpi_comm.gather(layer_weights, root=0)
             if mpi_rank == 0:
                 for j in range(len(layer_weights)):
+                    # aggregate
                     layer_weights[j] = np.mean( np.array( [weights[j] for weights in layer_weights_gathered] ) , axis=0)
             else:
                 layer_weights = None
             layer_weights = mpi_comm.bcast(layer_weights, root=0)
             layer.set_weights(layer_weights)
-            break
 
-        break
+        if mpi_rank == 0:
+            # validation
+            [loss, accuracy] = model.evaluate(val_X, val_Y, batch_size=1024, verbose=2)
+            print("Cross entropy: %0.2f, accuracy: %0.2f" % (loss, accuracy), flush=True)
+            model.save(os.path.basename(__file__) +'.hdf5')
+            epoch_pbar.update(i+1)
 
-        # if rank == 0:
-        #     # validation
-        #     [loss, accuracy] = model.evaluate(val_X, val_Y, batch_size=1024, verbose=2)
-        #     print("Cross entropy: %0.2f, accuracy: %0.2f" % (loss, accuracy), flush=True)
-        #     model.save(os.path.basename(__file__) +'.hdf5')
-        #     epoch_pbar.update(i+1)
-
-    print('done', flush=True)
+    print('rank {}: done'.format((mpi_rank)), flush=True)

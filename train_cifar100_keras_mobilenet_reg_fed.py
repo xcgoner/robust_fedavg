@@ -139,9 +139,9 @@ if __name__ == '__main__':
 
         pbar = Progbar(len(sub_training_files))
 
-        for layer in model.layers:
-            layer.kernel_regularizer = new_regularizer(args.regularization, layer.get_weights()) 
-        model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=args.lr, momentum=0), metrics=['accuracy'])
+        # for layer in model.layers:
+        #     layer.kernel_regularizer = new_regularizer(args.regularization, layer.get_weights()) 
+        # model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=args.lr, momentum=0), metrics=['accuracy'])
 
         # train
         # for filename in sub_training_files:

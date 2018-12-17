@@ -48,7 +48,8 @@ if __name__ == '__main__':
     if not os.path.exists(output_val_dir):
         os.makedirs(output_val_dir)
 
-    (x_train, y_train), (x_test, y_test) = cifar100.load_data(label_mode='fine')
+    # (x_train, y_train), (x_test, y_test) = cifar100.load_data(label_mode='fine')
+    (x_train, y_train), (x_test, y_test) = cifar100.load_data(label_mode='coarse')
 
     batch_size = int(math.floor(x_train.shape[0] / args.nsplit))
 

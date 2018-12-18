@@ -35,7 +35,8 @@ parser.add_argument("-n", "--nsplit", type=int, help="number of split", default=
 parser.add_argument("-l", "--lr", type=float, help="learning rate", default=0.001)
 parser.add_argument("-r", "--regularization", type=float, help="weight of regularization", default=0.00001)
 parser.add_argument("-o", "--log", type=str, help="dir of the log file", default='train_cifar100.log')
-parser.add_argument("-g", "--granularity", type=str, help="fine or coarse", default='fine')
+parser.add_argument("-c", "--classes", type=int, help="number of classes", default='20')
+parser.add_argument("-i", "--iterations", type=int, help="number of local epochs", default=50)
  
 args = parser.parse_args()
 
@@ -61,10 +62,7 @@ for filename in sorted(listdir(train_dir)):
 
 context = mx.cpu()
 
-if args.granularity == 'fine':
-    classes = 100
-else:
-    classes = 20
+classes = args.classes
 
 def get_train_batch(train_filename):
     with open(train_filename, "rb") as f:
@@ -103,7 +101,7 @@ if mpi_rank == 0:
     val_data = gluon.data.DataLoader(val_dataset, batch_size=1024, shuffle=False, last_batch='keep', num_workers=1)
 
 model_kwargs = {'ctx': context, 'pretrained': False, 'classes': classes}
-net = get_model('mobilenetv2_0.25', **model_kwargs)
+net = get_model('mobilenetv2_0.75', **model_kwargs)
 
 net.initialize(mx.init.MSRAPrelu(), ctx=context)
 
@@ -151,22 +149,25 @@ for epoch in range(args.epochs):
 
         train_data = random.choice(train_data_list)
 
+        if epoch > 5:
+            trainer.set_learning_rate(trainer.learning_rate * 0.99)
+
         # train
-        for i, (data, label) in enumerate(train_data):
-            if i > 50:
-                break
-            with ag.record():
-                outputs = net(data)
-                loss = loss_func(outputs, label)
-            loss.backward()
-            # add regularization
-            for param, param_prev in zip(net.collect_params().values(), params_prev):
-                if param.grad_req != 'null':
-                    grad = param.grad()
-                    # nd.elemwise_add(x, y, out=y)
-                    grad[:] = grad + args.regularization * ( param.data() - param_prev )
-            trainer.step(args.batchsize)
-            # train_metric.update(label, outputs)
+        # local epoch
+        for local_epoch in range(args.iterations):
+            for i, (data, label) in enumerate(train_data):
+                with ag.record():
+                    outputs = net(data)
+                    loss = loss_func(outputs, label)
+                loss.backward()
+                # add regularization
+                for param, param_prev in zip(net.collect_params().values(), params_prev):
+                    if param.grad_req != 'null':
+                        grad = param.grad()
+                        # nd.elemwise_add(x, y, out=y)
+                        grad[:] = grad + args.regularization * ( param.data() - param_prev )
+                trainer.step(args.batchsize)
+                # train_metric.update(label, outputs)
         
         # aggregation
         nd.waitall()

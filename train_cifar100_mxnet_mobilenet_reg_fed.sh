@@ -27,4 +27,4 @@ logfile=/homes/cx2/federated/results/train_cifar100_mxnet_mobilenet_reg_fed.txt
 > $logfile
 
 # mpirun -np 8 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed.py --nsplit 40 --batchsize 128 --lr 0.04 --regularization 0.1 --epochs 800 --dir /homes/cx2/datasets/cifar100 -o $logfile 2>&1 | tee /homes/cx2/federated/results/train_cifar100_mxnet_mobilenet_reg_fed.log
-mpirun -np 16 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed.py --granularity coarse --nsplit 40 --batchsize 16 --lr 0.01 --regularization 5 --epochs 800 --dir /homes/cx2/datasets/cifar100_coarse -o $logfile 2>&1 | tee /homes/cx2/federated/results/train_cifar100_mxnet_mobilenet_reg_fed.log
+mpirun -np 16 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed.py --granularity coarse --nsplit 40 --batchsize 16 --lr 0.02 --regularization 1 --epochs 800 --dir /homes/cx2/datasets/cifar100_coarse -o $logfile 2>&1 | tee /homes/cx2/federated/results/train_cifar100_mxnet_mobilenet_reg_fed.log

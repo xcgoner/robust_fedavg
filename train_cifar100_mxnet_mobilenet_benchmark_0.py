@@ -72,7 +72,7 @@ acc_top1 = mx.metric.Accuracy()
 acc_top5 = mx.metric.TopKAccuracy(5)
 
 for epoch in range(args.epochs):
-    train_metric.reset()
+    # train_metric.reset()
 
     # train
     for i, (data, label) in enumerate(train_data):
@@ -81,7 +81,7 @@ for epoch in range(args.epochs):
             loss = loss_func(outputs, label)
         loss.backward()
         trainer.step(args.batchsize)
-        train_metric.update(label, outputs)
+        # train_metric.update(label, outputs)
 
     # test
     acc_top1.reset()

@@ -35,15 +35,18 @@ parser.add_argument("-v", "--interval", type=int, help="log interval", default=1
 parser.add_argument("-n", "--nsplit", type=int, help="number of split", default=40)
 parser.add_argument("-l", "--lr", type=float, help="learning rate", default=0.001)
 parser.add_argument("-r", "--regularization", type=float, help="weight of regularization", default=0.00001)
+parser.add_argument("--reg-inc", type=float, help="increment factor of regularization", default=1.5)
+parser.add_argument("--reg-inc-epoch", type=str, help="epoch of regularization", default='400')
 parser.add_argument("-o", "--log", type=str, help="dir of the log file", default='train_cifar100.log')
-parser.add_argument("-c", "--classes", type=int, help="number of classes", default='20')
+parser.add_argument("-c", "--classes", type=int, help="number of classes", default=20)
 parser.add_argument("-i", "--iterations", type=int, help="number of local epochs", default=50)
 parser.add_argument("-a", "--aggregation", type=str, help="aggregation method", default='mean')
 parser.add_argument("-q", "--nbyz", type=int, help="number of Byzantine workers", default=0)
 parser.add_argument("-t", "--trim", type=int, help="number of trimmed workers on one side", default=0)
 parser.add_argument("--lr-decay", type=float, help="lr decay rate", default=0.1)
 parser.add_argument("--lr-decay-epoch", type=str, help="lr decay epoch", default='400')
-parser.add_argument("--iid", type=int, help="IID setting", default='0')
+parser.add_argument("--iid", type=int, help="IID setting", default=0)
+parser.add_argument("--model", type=str, help="model", default='mobilenetv2_1.0')
  
 args = parser.parse_args()
 
@@ -90,23 +93,8 @@ def get_test_batch(data_dir):
     
     return nd.transpose(nd.array(B.astype('float32') / 255.0), (0, 3, 1, 2)), nd.array(L)
 
-
-# partition dataset
-if args.iid == 0:
-    if mpi_rank == 0:
-        training_file_index = [i for i in range(len(training_files))]
-        random.shuffle(training_file_index)
-        training_file_index_list = [index_list.astype('int').tolist() for index_list in np.array_split(training_file_index, mpi_size)]
-        # print(training_file_index_list, flush=True)
-    else:
-        training_file_index_list = None
-    training_file_index_list = mpi_comm.scatter(training_file_index_list, root=0)
-    sub_training_files = [training_files[i] for i in training_file_index_list]
-else:
-    sub_training_files = training_files
-
 train_data_list = []
-for training_file in sub_training_files:
+for training_file in training_files:
     [train_X, train_Y] = get_train_batch(training_file)
     train_dataset = mx.gluon.data.dataset.ArrayDataset(train_X, train_Y)
     train_data = gluon.data.DataLoader(train_dataset, batch_size=args.batchsize, shuffle=True, last_batch='rollover', num_workers=1)
@@ -118,7 +106,7 @@ if mpi_rank == 0:
     val_data = gluon.data.DataLoader(val_dataset, batch_size=1024, shuffle=False, last_batch='keep', num_workers=1)
 
 model_kwargs = {'ctx': context, 'pretrained': False, 'classes': classes}
-net = get_model('mobilenetv2_1.0', **model_kwargs)
+net = get_model(args.model, **model_kwargs)
 
 net.initialize(mx.init.MSRAPrelu(), ctx=context)
 
@@ -130,6 +118,7 @@ optimizer = 'sgd'
 optimizer_params = {'momentum': 0, 'learning_rate': args.lr, 'wd': 0}
 
 lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
+reg_inc_epoch = [int(i) for i in args.reg_inc_epoch.split(',')]
 
 trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
 
@@ -166,15 +155,32 @@ for param, param_prev in zip(net.collect_params().values(), params_prev):
 if mpi_rank == 0:
     worker_list = list(range(mpi_size))
 
+training_file_index_list = [i for i in range(len(training_files))]
+
+reg = 0
+
 for epoch in range(args.epochs):
         # train_metric.reset()
 
-        train_data = random.choice(train_data_list)
+        tic = time.time()
+
+        if args.iid == 0:
+            if mpi_rank == 0:
+                random.shuffle(training_file_index_list)
+                training_file_index_sublist = training_file_index_list[0:mpi_size]
+            else:
+                training_file_index_sublist = None
+            training_file_index = mpi_comm.scatter(training_file_index_sublist, root=0)
+            train_data = train_data_list[training_file_index]
 
 
         if epoch in lr_decay_epoch:
             trainer.set_learning_rate(trainer.learning_rate * args.lr_decay)
 
+        if reg > 0 and epoch in reg_inc_epoch:
+            reg = reg * args.reg_inc
+        if epoch == reg_inc_epoch[0]:
+            reg = args.regularization
 
         # select byz workers
         if args.nbyz > 0:
@@ -212,12 +218,13 @@ for epoch in range(args.epochs):
                         loss = loss_func(outputs, label)
                     loss.backward()
                     # add regularization
-                    if args.regularization > 0:
+                    # TODO: change the implementation of regularization
+                    if reg > 0:
                         for param, param_prev in zip(net.collect_params().values(), params_prev):
                             if param.grad_req != 'null':
                                 grad = param.grad()
                                 # nd.elemwise_add(x, y, out=y)
-                                grad[:] = grad + args.regularization * ( param.data() - param_prev )
+                                grad[:] = grad + reg * ( param.data() - param_prev )
                     trainer.step(args.batchsize)
                     # train_metric.update(label, outputs)
         
@@ -240,7 +247,10 @@ for epoch in range(args.epochs):
 
         # test
         nd.waitall()
-        if mpi_rank == 0:
+
+        toc = time.time()
+
+        if mpi_rank == 0 and ( epoch % args.interval == 0 or epoch == args.epochs-1 ) :
             acc_top1.reset()
             acc_top5.reset()
             for i, (data, label) in enumerate(val_data):
@@ -251,7 +261,7 @@ for epoch in range(args.epochs):
             _, top1 = acc_top1.get()
             _, top5 = acc_top5.get()
 
-            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f'%(epoch, top1, top5))
+            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, time=%f, lr=%f, reg=%f'%(epoch, top1, top5, toc-tic, trainer.learning_rate, reg))
             # logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f'%(epoch, top1, top5))
 
 

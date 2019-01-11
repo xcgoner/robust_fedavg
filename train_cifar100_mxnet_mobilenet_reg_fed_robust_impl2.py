@@ -233,6 +233,14 @@ nd.waitall()
 for epoch in range(args.start_epoch+1, args.epochs):
         # train_metric.reset()
 
+        if epoch in lr_decay_epoch:
+            lr = lr * args.lr_decay
+
+        if alpha > 0 and epoch in reg_inc_epoch:
+            alpha = alpha + args.reg_inc
+        if epoch == reg_inc_epoch[0]:
+            alpha = args.regularization
+
         tic = time.time()
 
         if args.iid == 0:
@@ -245,7 +253,8 @@ for epoch in range(args.start_epoch+1, args.epochs):
             train_data = train_data_list[training_file_index]
 
         trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
-        trainer.set_learning_rate(lr * (1-alpha))
+        # trainer.set_learning_rate(lr * (1-alpha))
+        trainer.set_learning_rate(lr)
 
         if alpha > 0:
             for param, param_prev in zip(net.collect_params().values(), params_prev):
@@ -339,14 +348,6 @@ for epoch in range(args.start_epoch+1, args.epochs):
                 [dirname, postfix] = os.path.splitext(args.log)
                 filename = dirname + ("_%04d.params" % (epoch))
                 net.save_parameters(filename)
-        
-        if epoch in lr_decay_epoch:
-            lr = lr * args.lr_decay
-
-        if alpha > 0 and epoch in reg_inc_epoch:
-            alpha = alpha + args.reg_inc
-        if epoch == reg_inc_epoch[0]:
-            alpha = args.regularization
         
         nd.waitall()
 

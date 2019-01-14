@@ -59,7 +59,6 @@ if __name__ == '__main__':
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
 
-
     # If subtract pixel mean is enabled
     if args.normalize == 1:
         x_train_mean = np.mean(x_train, axis=0)

@@ -49,6 +49,7 @@ parser.add_argument("--iid", type=int, help="IID setting", default=0)
 parser.add_argument("--model", type=str, help="model", default='mobilenetv2_1.0')
 parser.add_argument("--save", type=int, help="save", default=0)
 parser.add_argument("--start-epoch", type=int, help="epoch start from", default=-1)
+parser.add_argument("--seed", type=int, help="random seed", default=733)
  
 args = parser.parse_args()
 
@@ -62,6 +63,10 @@ if mpi_rank == 0:
     logger.setLevel(logging.INFO)
     logger.addHandler(filehandler)
     logger.addHandler(streamhandler)
+
+mx.random.seed(args.seed + mpi_rank)
+random.seed(args.seed + mpi_rank)
+np.random.seed(args.seed + mpi_rank)
 
 data_dir = os.path.join(args.dir, 'dataset_split_{}'.format(args.nsplit))
 train_dir = os.path.join(data_dir, 'train')
@@ -108,7 +113,7 @@ for training_file in training_files:
 if mpi_rank == 0:
     [val_X, val_Y] = get_test_batch(val_dir)
     val_dataset = mx.gluon.data.dataset.ArrayDataset(val_X, val_Y)
-    val_data = gluon.data.DataLoader(val_dataset, batch_size=1024, shuffle=False, last_batch='keep', num_workers=1)
+    val_data = gluon.data.DataLoader(val_dataset, batch_size=1000, shuffle=False, last_batch='keep', num_workers=1)
 
 model_name = args.model
 
@@ -137,6 +142,7 @@ if model_name == 'default':
         # net.add(gluon.nn.MaxPool2D(pool_size=2, strides=2))
         # Flatten and apply fullly connected layers
         net.add(gluon.nn.Flatten())
+        # net.add(gluon.nn.Dense(512, activation="relu"))
         # net.add(gluon.nn.Dense(512, activation="relu"))
         net.add(gluon.nn.Dense(512, activation="relu"))
         net.add(gluon.nn.Dropout(rate=0.25))
@@ -174,7 +180,8 @@ acc_top5 = mx.metric.TopKAccuracy(5)
 
 print('warm up', flush=True)
 trainer.set_learning_rate(0.01)
-train_data = random.choice(train_data_list)
+# train_data = random.choice(train_data_list)
+train_data = train_data_list[90]
 for local_epoch in range(5):
     for i, (data, label) in enumerate(train_data):
         with ag.record():
@@ -211,6 +218,12 @@ training_file_index_list = [i for i in range(len(training_files))]
 
 alpha = 0
 
+randperm_choice_list = []
+randperm_list = [i for i in range(args.nsplit)]
+for i in range(int(math.ceil(args.epochs * mpi_size / args.nsplit))):
+    random.shuffle(randperm_list)
+    randperm_choice_list = randperm_choice_list + randperm_list
+
 if args.start_epoch > 0:
     [dirname, postfix] = os.path.splitext(args.log)
     filename = dirname + ("_%04d.params" % (args.start_epoch))
@@ -230,6 +243,8 @@ if args.start_epoch > 0:
 
 nd.waitall()
 
+time_0 = time.time()
+
 for epoch in range(args.start_epoch+1, args.epochs):
         # train_metric.reset()
 
@@ -245,8 +260,8 @@ for epoch in range(args.start_epoch+1, args.epochs):
 
         if args.iid == 0:
             if mpi_rank == 0:
-                random.shuffle(training_file_index_list)
-                training_file_index_sublist = training_file_index_list[0:mpi_size]
+                training_file_index_sublist = randperm_choice_list[(mpi_size * epoch):(mpi_size * epoch + mpi_size)]
+                # logger.info(training_file_index_sublist)
             else:
                 training_file_index_sublist = None
             training_file_index = mpi_comm.scatter(training_file_index_sublist, root=0)
@@ -341,7 +356,7 @@ for epoch in range(args.start_epoch+1, args.epochs):
             _, top1 = acc_top1.get()
             _, top5 = acc_top5.get()
 
-            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, time=%f, lr=%f, alpha=%f'%(epoch, top1, top5, toc-tic, trainer.learning_rate, alpha))
+            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, lr=%f, alpha=%f, time=%f, elapsed=%f'%(epoch, top1, top5, trainer.learning_rate, alpha, toc-tic, time.time()-time_0))
             # logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f'%(epoch, top1, top5))
 
             if args.save == 1:

@@ -86,7 +86,7 @@ if __name__ == '__main__':
     y_train = y_train[sort_idx]
 
     # permute the neighbouring trianing files
-    perm = np.arange(x_train.shape[0]).reshape((-1,200))
+    perm = np.arange(x_train.shape[0]).reshape((-1,250))
     np.random.shuffle(perm)
     perm = perm.reshape(-1)
     x_train = x_train[perm]

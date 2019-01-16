@@ -256,6 +256,9 @@ for epoch in range(args.start_epoch+1, args.epochs):
         if epoch == reg_inc_epoch[0]:
             alpha = args.regularization
 
+        if epoch in lr_decay_epoch:
+            alpha = alpha * args.lr_decay
+
         tic = time.time()
 
         if args.iid == 0:

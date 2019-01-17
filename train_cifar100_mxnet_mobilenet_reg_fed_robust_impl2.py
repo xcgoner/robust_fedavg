@@ -29,6 +29,7 @@ print('rank: %d' % (mpi_rank), flush=True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dir", type=str, help="dir of the data", required=True)
+parser.add_argument("--valdir", type=str, help="dir of the val data", required=True)
 parser.add_argument("-b", "--batchsize", type=int, help="batchsize", default=8)
 parser.add_argument("-e", "--epochs", type=int, help="epochs", default=100)
 parser.add_argument("-v", "--interval", type=int, help="log interval", default=10)
@@ -70,7 +71,9 @@ np.random.seed(args.seed + mpi_rank)
 
 data_dir = os.path.join(args.dir, 'dataset_split_{}'.format(args.nsplit))
 train_dir = os.path.join(data_dir, 'train')
-val_dir = os.path.join(data_dir, 'val')
+# val_dir = os.path.join(data_dir, 'val')
+val_train_dir = os.path.join(args.valdir, 'train')
+val_val_dir = os.path.join(args.valdir, 'val')
 
 training_files = []
 for filename in sorted(listdir(train_dir)):
@@ -95,8 +98,16 @@ def get_train_batch_byz(train_filename):
     # return nd.transpose(nd.array(B.astype('float32') / 255.0), (0, 3, 1, 2)), nd.array(classes - 1 - L)
     return nd.transpose(nd.array(B), (0, 3, 1, 2)), nd.array(classes - 1 - L)
 
-def get_test_batch(data_dir):
-    test_filename = os.path.join(data_dir, "val_data.pkl")
+def get_val_train_batch(data_dir):
+    test_filename = os.path.join(data_dir, 'train_data_%03d.pkl' % mpi_rank)
+    with open(test_filename, "rb") as f:
+        B, L = pickle.load(f)
+    
+    # return nd.transpose(nd.array(B.astype('float32') / 255.0), (0, 3, 1, 2)), nd.array(L)
+    return nd.transpose(nd.array(B), (0, 3, 1, 2)), nd.array(L)
+
+def get_val_val_batch(data_dir):
+    test_filename = os.path.join(data_dir, 'val_data_%03d.pkl' % mpi_rank)
     with open(test_filename, "rb") as f:
         B, L = pickle.load(f)
     
@@ -110,10 +121,13 @@ for training_file in training_files:
     train_data = gluon.data.DataLoader(train_dataset, batch_size=args.batchsize, shuffle=True, last_batch='rollover', num_workers=1)
     train_data_list.append(train_data)
 
-if mpi_rank == 0:
-    [val_X, val_Y] = get_test_batch(val_dir)
-    val_dataset = mx.gluon.data.dataset.ArrayDataset(val_X, val_Y)
-    val_data = gluon.data.DataLoader(val_dataset, batch_size=1000, shuffle=False, last_batch='keep', num_workers=1)
+[val_train_X, val_train_Y] = get_val_train_batch(val_train_dir)
+val_train_dataset = mx.gluon.data.dataset.ArrayDataset(val_train_X, val_train_Y)
+val_train_data = gluon.data.DataLoader(val_train_dataset, batch_size=1000, shuffle=False, last_batch='keep', num_workers=1)
+
+[val_val_X, val_val_Y] = get_val_val_batch(val_val_dir)
+val_val_dataset = mx.gluon.data.dataset.ArrayDataset(val_val_X, val_val_Y)
+val_val_data = gluon.data.DataLoader(val_val_dataset, batch_size=1000, shuffle=False, last_batch='keep', num_workers=1)
 
 model_name = args.model
 
@@ -175,6 +189,7 @@ train_metric = mx.metric.Accuracy()
 
 acc_top1 = mx.metric.Accuracy()
 acc_top5 = mx.metric.TopKAccuracy(5)
+train_cross_entropy = mx.metric.CrossEntropy()
 
 # warmup
 
@@ -228,18 +243,32 @@ if args.start_epoch > 0:
     [dirname, postfix] = os.path.splitext(args.log)
     filename = dirname + ("_%04d.params" % (args.start_epoch))
     net.load_parameters(filename, ctx=context)
+
+    acc_top1.reset()
+    acc_top5.reset()
+    train_cross_entropy.reset()
+    for i, (data, label) in enumerate(val_val_data):
+        outputs = net(data)
+        acc_top1.update(label, outputs)
+        acc_top5.update(label, outputs)
+
+    for i, (data, label) in enumerate(val_train_data):
+        outputs = net(data)
+        train_cross_entropy.update(label, nd.softmax(outputs))
+
+    _, top1 = acc_top1.get()
+    _, top5 = acc_top5.get()
+    _, crossentropy = train_cross_entropy.get()
+
+    top1_list = mpi_comm.gather(top1, root=0)
+    top5_list = mpi_comm.gather(top5, root=0)
+    crossentropy_list = mpi_comm.gather(crossentropy, root=0)
+
     if mpi_rank == 0:
-        acc_top1.reset()
-        acc_top5.reset()
-        for i, (data, label) in enumerate(val_data):
-            outputs = net(data)
-            acc_top1.update(label, outputs)
-            acc_top5.update(label, outputs)
-
-        _, top1 = acc_top1.get()
-        _, top5 = acc_top5.get()
-
-        logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, lr=%f, alpha=%f'%(args.start_epoch, top1, top5, trainer.learning_rate, alpha))
+        top1_list = np.array(top1_list)
+        top5_list = np.array(top5_list)
+        crossentropy_list = np.array(crossentropy_list)
+        logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, loss=%f, lr=%f, alpha=%f'%(args.start_epoch, top1_list.mean(), top5_list.mean(), crossentropy_list.mean(), trainer.learning_rate, alpha))
 
 nd.waitall()
 
@@ -348,24 +377,39 @@ for epoch in range(args.start_epoch+1, args.epochs):
 
         toc = time.time()
 
-        if mpi_rank == 0 and ( epoch % args.interval == 0 or epoch == args.epochs-1 ) :
+        if  ( epoch % args.interval == 0 or epoch == args.epochs-1 ) :
             acc_top1.reset()
             acc_top5.reset()
-            for i, (data, label) in enumerate(val_data):
+            train_cross_entropy.reset()
+            for i, (data, label) in enumerate(val_val_data):
                 outputs = net(data)
                 acc_top1.update(label, outputs)
                 acc_top5.update(label, outputs)
 
+            for i, (data, label) in enumerate(val_train_data):
+                outputs = net(data)
+                train_cross_entropy.update(label, nd.softmax(outputs))
+
             _, top1 = acc_top1.get()
             _, top5 = acc_top5.get()
+            _, crossentropy = train_cross_entropy.get()
 
-            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, lr=%f, alpha=%f, time=%f, elapsed=%f'%(epoch, top1, top5, trainer.learning_rate, alpha, toc-tic, time.time()-time_0))
-            # logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f'%(epoch, top1, top5))
+            top1_list = mpi_comm.gather(top1, root=0)
+            top5_list = mpi_comm.gather(top5, root=0)
+            crossentropy_list = mpi_comm.gather(crossentropy, root=0)
 
-            if args.save == 1:
-                [dirname, postfix] = os.path.splitext(args.log)
-                filename = dirname + ("_%04d.params" % (epoch))
-                net.save_parameters(filename)
+            if mpi_rank == 0:
+                top1_list = np.array(top1_list)
+                top5_list = np.array(top5_list)
+                crossentropy_list = np.array(crossentropy_list)
+
+                logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, loss=%f, lr=%f, alpha=%f, time=%f, elapsed=%f'%(epoch, top1_list.mean(), top5_list.mean(), crossentropy_list.mean(), trainer.learning_rate, alpha, toc-tic, time.time()-time_0))
+                # logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f'%(epoch, top1, top5))
+
+                if args.save == 1:
+                    [dirname, postfix] = os.path.splitext(args.log)
+                    filename = dirname + ("_%04d.params" % (epoch))
+                    net.save_parameters(filename)
         
         nd.waitall()
 

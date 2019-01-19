@@ -28,49 +28,51 @@ valdir=/homes/cx2/datasets/cifar10_normalized/dataset_split_10
 watchfile=/homes/cx2/federated/results/exp_script_4.log
 
 
-logfile=/homes/cx2/federated/results/exp_balanced_lr_15_reg_000.txt
+logfile=/homes/cx2/federated/results/exp_balanced_lr_10_reg_000.txt
 
 > $logfile
 
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 755 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 755 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 557 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 557 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 446 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 446 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 
 
-logfile=/homes/cx2/federated/results/exp_balanced_lr_05_reg_000.txt
 
-> $logfile
-
-cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
-cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
-cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 755 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
-cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 557 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
-cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0 --reg-inc 0.1 --reg-inc-epoch 800 --epochs 800 --iterations 1 --seed 446 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
-
-
-logfile=/homes/cx2/federated/results/exp_balanced_lr_10_reg_010.txt
+logfile=/homes/cx2/federated/results/exp_balanced_lr_15_reg_120.txt
 
 > $logfile
 
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.01 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.12 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.01 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.12 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.01 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 755 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.12 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 755 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.01 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 557 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.12 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 557 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.01 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 446 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.15 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.12 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 446 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+
+
+
+logfile=/homes/cx2/federated/results/exp_balanced_lr_05_reg_002.txt
+
+> $logfile
+
+cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.002 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.002 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.002 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 755 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.002 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 557 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/robust_fedavg/train_cifar100_mxnet_mobilenet_reg_fed_robust_impl2.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.05 --lr-decay 0.4 --lr-decay-epoch 400 --regularization 0.002 --reg-inc 0.1 --reg-inc-epoch 0 --epochs 800 --iterations 1 --seed 446 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile

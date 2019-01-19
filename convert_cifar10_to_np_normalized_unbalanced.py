@@ -107,9 +107,10 @@ if __name__ == '__main__':
         l = y_train[i_start:i_end, :]
         print(b.shape)
         print(l.shape)
+        print(np.unique(l).shape[0])
         print(output_train_filename, flush=True)
-        with open(output_train_filename, "wb") as f:
-            pickle.dump([b, l], f)
+        # with open(output_train_filename, "wb") as f:
+        #     pickle.dump([b, l], f)
         
         bias_size = bias_size + args.step
 
@@ -120,5 +121,5 @@ if __name__ == '__main__':
     print(x_test.shape)
     print(y_test.shape)
     print(output_test_filename, flush=True)
-    with open(output_test_filename, "wb") as f:
-        pickle.dump([x_test, y_test], f)
+    # with open(output_test_filename, "wb") as f:
+    #     pickle.dump([x_test, y_test], f)

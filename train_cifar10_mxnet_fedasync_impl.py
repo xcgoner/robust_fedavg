@@ -43,8 +43,8 @@ parser.add_argument("-o", "--log", type=str, help="dir of the log file", default
 parser.add_argument("-c", "--classes", type=int, help="number of classes", default=20)
 parser.add_argument("-i", "--iterations", type=int, help="number of local epochs", default=50)
 parser.add_argument("-a", "--aggregation", type=str, help="aggregation method, mean or trim", default='mean')
-parser.add_argument("--lr-decay", type=float, help="lr decay rate", default=0.1)
-parser.add_argument("--lr-decay-epoch", type=str, help="lr decay epoch", default='400')
+parser.add_argument("--alpha-decay", type=float, help="alpha decay rate", default=0.5)
+parser.add_argument("--alpha-decay-epoch", type=str, help="alpha decay epoch", default='400')
 # --iid 0 means non-IID
 parser.add_argument("--iid", type=int, help="IID setting", default=0)
 parser.add_argument("--model", type=str, help="model", default='mobilenetv2_1.0')
@@ -157,7 +157,8 @@ lr = args.lr
 optimizer_params = {'momentum': args.momentum, 'learning_rate': lr, 'wd': 0.0001}
 # optimizer_params = {'momentum': 0.0, 'learning_rate': lr, 'wd': 0.0}
 
-lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
+# lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
+alpha_decay_epoch = [int(i) for i in args.alpha_decay_epoch.split(',')]
 
 loss_func = gluon.loss.SoftmaxCrossEntropyLoss()
 
@@ -219,6 +220,11 @@ if mpi_rank == 0:
     val_val_data = gluon.data.DataLoader(val_val_dataset, batch_size=1000, shuffle=False, last_batch='keep', num_workers=1)
 
     for epoch in range(args.epochs):
+
+        # alpha decay
+        if epoch in alpha_decay_epoch:
+            alpha = alpha * args.alpha_decay
+
         # receive model from 
         nd.waitall()
         if not server_send_list and not server_recv_list:
@@ -264,7 +270,7 @@ if mpi_rank == 0:
             _, top5 = acc_top5.get()
             _, crossentropy = train_cross_entropy.get()
 
-            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, loss=%f, lr=%f, rho=%f' % (epoch, top1, top5, crossentropy, trainer.learning_rate, rho))
+            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, loss=%f, lr=%f, rho=%f, alpha=%f' % (epoch, top1, top5, crossentropy, trainer.learning_rate, rho, alpha))
             
             nd.waitall()
 else:

@@ -35,7 +35,6 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--nsplit", type=int, help="number of partitions of training set", default=100)
-    parser.add_argument("--nsplitv", type=int, help="number of partitions of validation set", default=10)
     parser.add_argument("-o", "--output", type=str, help="dir of output", required=True)
     parser.add_argument("--normalize", type=int, help="normalized or not", default=0)
     args = parser.parse_args()
@@ -76,6 +75,20 @@ if __name__ == '__main__':
 
     perm = list(range( x_train.shape[0] ))
     random.shuffle(perm)
+
+    output_val_val_filename = os.path.join(output_val_dir, "val_data.pkl")
+    print(x_test.shape)
+    print(y_test.shape)
+    print(output_val_val_filename, flush=True)
+    with open(output_val_val_filename, "wb") as f:
+        pickle.dump([x_test, y_test], f)
+
+    output_val_train_filename = os.path.join(output_val_dir, "train_data.pkl")
+    print(x_train.shape)
+    print(y_train.shape)
+    print(output_val_train_filename, flush=True)
+    with open(output_val_train_filename, "wb") as f:
+        pickle.dump([x_train, y_train], f)
     
     x_train = np.array([x_train[index, :, :, :] for index in perm])
     y_train = np.array([y_train[index, :] for index in perm])
@@ -94,25 +107,9 @@ if __name__ == '__main__':
         with open(output_train_filename, "wb") as f:
             pickle.dump([b, l], f)
 
-    if args.nsplitv > 1:
-        batch_size_v = x_test.shape[0] // args.nsplitv
-        for i in range(args.nsplitv):
-            output_test_filename = os.path.join(output_val_dir, "val_data_%03d.pkl" % i)
-            i_start = i * batch_size_v
-            i_end = i_start + batch_size_v
-            if i_end > x_test.shape[0]:
-                i_end = x_test.shape[0]
-            b = x_test[i_start:i_end, :, :, :]
-            l = y_test[i_start:i_end, :]
-            print(b.shape)
-            print(l.shape)
-            print(output_test_filename, flush=True)
-            with open(output_test_filename, "wb") as f:
-                pickle.dump([b, l], f)
-    else:
-        output_test_filename = os.path.join(output_val_dir, "val_data.pkl")
-        print(x_test.shape)
-        print(y_test.shape)
-        print(output_test_filename, flush=True)
-        with open(output_test_filename, "wb") as f:
-            pickle.dump([x_test, y_test], f)
+    # output_val_val_filename = os.path.join(output_val_dir, "val_data.pkl")
+    # print(x_test.shape)
+    # print(y_test.shape)
+    # print(output_val_val_filename, flush=True)
+    # with open(output_val_val_filename, "wb") as f:
+    #     pickle.dump([x_test, y_test], f)

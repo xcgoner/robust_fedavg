@@ -1,6 +1,4 @@
-# Robust Federated Learning
-
-### This is the python implementation of the paper "Robust Federated Learning: Secured Distributed Machine Learning on Non-IID Data"
+# Asynchronous Federated Optimization
 
 ### Requirements
 

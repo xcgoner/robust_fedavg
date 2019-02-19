@@ -42,4 +42,4 @@ logfile=$logdir/experiment_script_1.txt
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
 
 # start training
-mpirun -np 11 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/fed_async/train_cifar10_mxnet_fedasync_impl.py --classes 10 --model default --nsplit 10 --batchsize 50 --lr 0.1 --rho 0.01 --alpha 0.9 --alpha-decay 0.5 --alpha-decay-epoch 400 --epochs 800 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+mpirun -np 11 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/fed_async/train_cifar10_mxnet_fedasync_impl.py --classes 10 --model default --nsplit 10 --batchsize 50 --lr 0.1 --rho 0.01 --alpha 0.9 --alpha-decay 0.5 --alpha-decay-epoch 200,300 --epochs 400 --server-send-threshold 0.96 --queue-shuffle-interval 2 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile

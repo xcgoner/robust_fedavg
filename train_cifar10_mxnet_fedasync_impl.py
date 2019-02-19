@@ -49,7 +49,8 @@ parser.add_argument("--alpha-decay-epoch", type=str, help="alpha decay epoch", d
 parser.add_argument("--iid", type=int, help="IID setting", default=0)
 parser.add_argument("--model", type=str, help="model", default='mobilenetv2_1.0')
 parser.add_argument("--seed", type=int, help="random seed", default=733)
-parser.add_argument("--server-send-interval", type=int, help="interval of server sending model back to workers", default=3)
+parser.add_argument("--server-send-threshold", type=float, help="probability of server sending model back to workers", default=0.9)
+parser.add_argument("--queue-shuffle-interval", type=int, help="interval of server shuffling send/recv queue", default=5)
  
 args = parser.parse_args()
 # args.nsplit = mpi_size
@@ -219,39 +220,70 @@ if mpi_rank == 0:
     val_val_dataset = mx.gluon.data.dataset.ArrayDataset(val_val_X, val_val_Y)
     val_val_data = gluon.data.DataLoader(val_val_dataset, batch_size=1000, shuffle=False, last_batch='keep', num_workers=1)
 
-    for epoch in range(args.epochs):
+    max_delay = 0
+    server_ts = 0
+    sum_delay = 0
+    terminated_workers = 0
+    tic = time.time()
+    for epoch in range(args.epochs * mpi_size):
+
+        ts_flag = 0
 
         # alpha decay
-        if epoch in alpha_decay_epoch:
+        if server_ts in alpha_decay_epoch:
             alpha = alpha * args.alpha_decay
 
         # receive model from 
         nd.waitall()
         if not server_send_list and not server_recv_list:
             logger.info('warning: no send and recv')
+            mpi_comm.abort()
+            break
 
         if server_recv_list:
-            random.shuffle(server_recv_list)
+            if epoch % args.queue_shuffle_interval == 0:
+                random.shuffle(server_recv_list)
             recv_worker = server_recv_list.pop(0)
             print('Rank %02d, recv %02d' % (mpi_rank, recv_worker), flush=True)
             recv_params = mpi_comm.recv(source=recv_worker, tag=0)
-            for param, param_nd in zip(net.collect_params().values(), recv_params):
-                weight = param.data()
-                weight[:] = weight * (1-alpha) + param_nd * alpha
-            server_send_list.append(recv_worker)
+            worker_ts = recv_params.pop(-1)
+            if worker_ts >= 0:
+                worker_delay = server_ts - worker_ts
+                sum_delay += worker_delay
+                if worker_delay > max_delay:
+                    max_delay = worker_delay
+            if server_ts < args.epochs:
+                for param, param_nd in zip(net.collect_params().values(), recv_params):
+                    weight = param.data()
+                    weight[:] = weight * (1-alpha) + param_nd * alpha
+                server_send_list.append(recv_worker)
+                server_ts += 1
+                ts_flag = 1
 
         # server send model
         if server_send_list:
-            random.shuffle(server_send_list)
-            if epoch > 0 and epoch % args.server_send_interval == 0:
+            if epoch % args.queue_shuffle_interval == 0:
+                random.shuffle(server_send_list)
+            if epoch > 0 and random.uniform(0,1) < args.server_send_threshold:
                 send_worker = server_send_list.pop(0)
                 send_params = [param.data().copy() for param in net.collect_params().values()]
+                if server_ts >= args.epochs:
+                    send_params.append(-1)
+                    terminated_workers += 1
+                    # logger.info('terminated_workers=%d' % terminated_workers)
+                else:
+                    send_params.append(server_ts)
                 print('Rank %02d, send %02d' % (mpi_rank, send_worker), flush=True)
                 mpi_comm.send(send_params, dest=send_worker, tag=0)
-                server_recv_list.append(send_worker)
+                if server_ts < args.epochs:
+                    server_recv_list.append(send_worker)
+
+        if terminated_workers == mpi_size-1:
+            # terminate server
+            break
         
         # validation
-        if  ( epoch % args.interval == 0 or epoch == args.epochs-1 ) :
+        if  ( server_ts % args.interval == 0 or server_ts == args.epochs-1 ) and server_ts < args.epochs and ts_flag :
             acc_top1.reset()
             acc_top5.reset()
             train_cross_entropy.reset()
@@ -270,7 +302,8 @@ if mpi_rank == 0:
             _, top5 = acc_top5.get()
             _, crossentropy = train_cross_entropy.get()
 
-            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, loss=%f, lr=%f, rho=%f, alpha=%f' % (epoch, top1, top5, crossentropy, trainer.learning_rate, rho, alpha))
+            logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, loss=%f, lr=%f, rho=%f, alpha=%f, max_delay=%d, mean_delay=%f, time=%f' % (server_ts, top1, top5, crossentropy, trainer.learning_rate, rho, alpha, max_delay, sum_delay*1.0/server_ts, time.time()-tic))
+            tic = time.time()
             
             nd.waitall()
 else:
@@ -278,6 +311,7 @@ else:
     [train_X, train_Y] = get_train_batch(training_files[mpi_rank-1])
     train_dataset = mx.gluon.data.dataset.ArrayDataset(train_X, train_Y)
     train_data = gluon.data.DataLoader(train_dataset, batch_size=args.batchsize, shuffle=True, last_batch='rollover', num_workers=1)
+    worker_ts = 0
     for epoch in range(1, args.epochs):
 
         # # learning rate decay
@@ -317,12 +351,17 @@ else:
         
         nd.waitall()
         # push model
-        params_np = [param.data().copy() for param in net.collect_params().values()]
+        params_nd = [param.data().copy() for param in net.collect_params().values()]
+        params_nd.append(worker_ts)
         print('Rank %02d, send %02d' % (mpi_rank, 0), flush=True)
-        mpi_comm.send(params_np, dest=0, tag=0)
+        mpi_comm.send(params_nd, dest=0, tag=0)
         # pull model
         print('Rank %02d, recv %02d' % (mpi_rank, 0), flush=True)
         params_prev = mpi_comm.recv(source=0, tag=0)
+        worker_ts = params_prev.pop(-1)
+        if worker_ts < 0:
+            # terminate worker
+            break
         for param, param_prev in zip(net.collect_params().values(), params_prev):
             param.set_data(param_prev)
 

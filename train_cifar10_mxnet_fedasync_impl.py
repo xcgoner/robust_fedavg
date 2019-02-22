@@ -236,8 +236,9 @@ if mpi_rank == 0:
         # receive model from 
         nd.waitall()
         if not server_send_list and not server_recv_list:
-            logger.info('warning: no send and recv')
-            mpi_comm.abort()
+            # logger.info('warning: no send and recv')
+            print('warning: no send and recv', flush=True)
+            mpi_comm.Abort()
             break
 
         if server_recv_list:

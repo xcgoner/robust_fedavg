@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l select=11:ncpus=112 -lplace=excl
+#PBS -l select=1:ncpus=112 -lplace=excl
 
 source /opt/intel/compilers_and_libraries_2017/linux/mpi/bin64/mpivars.sh
 source activate mxnet_latest
@@ -28,9 +28,9 @@ inputdir=$basedir/cifar10_normalized_async
 # validation data
 valdir=$basedir/cifar10_normalized_async/dataset_split_10
 
-watchfile=$logdir/experiment_script_1.log
+watchfile=$logdir/experiment_script_3.log
 
-logfile=$logdir/experiment_script_1.txt
+logfile=$logdir/experiment_script_3.txt
 
 # prepare the dataset
 # python convert_cifar10_to_np_normalized_unbalanced.py --nsplit 100 --normalize 1 --step 8 --output $basedir/cifar10_unbalanced/
@@ -38,8 +38,5 @@ logfile=$logdir/experiment_script_1.txt
 
 > $logfile
 
-# hostfile
-cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-
-# start training
-mpirun -np 11 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/fed_async/train_cifar10_mxnet_fedasync_impl.py --classes 10 --model default --nsplit 10 --batchsize 50 --lr 0.1 --rho 0.01 --alpha 0.9 --alpha-decay 0.5 --alpha-decay-epoch 200,300 --epochs 400 --server-send-threshold 0.98 --queue-shuffle-interval 16 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+python /homes/cx2/federated/fed_async/train_cifar10_mxnet_fedasync_singlethread_impl.py --classes 10 --model default --nsplit 100 --batchsize 50 --lr 0.1 --rho 0.01 --alpha 0.9 --alpha-decay 0.5 --alpha-decay-epoch 800,1000 --epochs 1200 --max-delay 4 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+# python /homes/cx2/federated/fed_async/train_cifar10_mxnet_fedasync_singlethread_impl.py --classes 10 --model default --nsplit 10 --batchsize 50 --lr 0.1 --rho 0.01 --alpha 0.9 --alpha-decay 0.3 --alpha-decay-epoch 200,300 --alpha-adaptive 0.5 --epochs 400 --max-delay 16 --iterations 1 --seed 337 --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile

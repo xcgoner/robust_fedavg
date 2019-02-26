@@ -28,14 +28,14 @@ inputdir=$basedir/cifar10_normalized_async
 # validation data
 valdir=$basedir/cifar10_normalized_async/dataset_split_100
 
-watchfile=$logdir/exp_script_1.log
+watchfile=$logdir/exp_script_0.log
 
 model="default"
 lr=0.1
 rho=0.01
 alpha=0.9
 
-for maxdelay in 2 4 6
+for maxdelay in 30 40 50 60
 do
     for iterations in 1 2
         do

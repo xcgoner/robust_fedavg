@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l select=11:ncpus=112 -lplace=excl
+#PBS -l select=1:ncpus=112 -lplace=excl
 
 source /opt/intel/compilers_and_libraries_2017/linux/mpi/bin64/mpivars.sh
 source activate mxnet_latest
@@ -26,28 +26,25 @@ logdir=/homes/cx2/federated/results
 inputdir=$basedir/cifar10_normalized_async
 
 # validation data
-valdir=$basedir/cifar10_normalized_async/dataset_split_10
+valdir=$basedir/cifar10_normalized_async/dataset_split_100
 
-watchfile=$logdir/exp_script_1.log
+watchfile=$logdir/exp_script_2.log
 
 model="default"
 lr=0.1
 rho=0.01
 alpha=0.9
-for threshold in 0.94 0.96 0.98
+
+for maxdelay in 8 12 16 20
 do
-    for interval in 2 4 6 8 12
-    do
-        logfile=$logdir/fed_async_cifar10_${model}_${lr}_${rho}_${alpha}_${threshold}_${interval}.txt
+    for iterations in 1 2
+        do
+        logfile=$logdir/fed_async_cifar10_singlethread_testdelay_${model}_${lr}_${rho}_${alpha}_${maxdelay}_${iterations}.txt
 
         > $logfile
-        for seed in 337 773 557 755 575 737 373 757 224 442
+        for seed in 337 773 557 755 
         do
-            # hostfile
-            cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-
-            # start training
-            mpirun -np 11 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/fed_async/train_cifar10_mxnet_fedasync_impl.py --classes 10 --model ${model} --nsplit 10 --batchsize 50 --lr ${lr} --rho ${rho} --alpha ${alpha} --alpha-decay 0.5 --alpha-decay-epoch 200,300 --epochs 400 --server-send-threshold ${threshold} --queue-shuffle-interval ${interval} --iterations 1 --seed ${seed} --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
+            python /homes/cx2/federated/fed_async/train_cifar10_mxnet_fedasync_singlethread_impl.py --classes 10 --model ${model} --nsplit 100 --batchsize 50 --lr ${lr} --rho ${rho} --alpha ${alpha} --alpha-decay 0.5 --alpha-decay-epoch 800 --epochs 2000 --max-delay ${maxdelay} --iterations ${iterations} --seed ${seed} --dir $inputdir --valdir $valdir -o $logfile 2>&1 | tee $watchfile
         done
     done
 done

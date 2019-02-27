@@ -28,7 +28,7 @@ inputdir=$basedir/cifar10_normalized_async
 # validation data
 valdir=$basedir/cifar10_normalized_async/dataset_split_100
 
-watchfile=$logdir/exp_script_1.log
+watchfile=$logdir/exp_script_25.log
 
 model="default"
 lr=0.1

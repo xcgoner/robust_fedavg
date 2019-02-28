@@ -275,7 +275,7 @@ for epoch in range(args.epochs):
         if worker_delay <= args.alpha_adaptive2:
             alpha_factor = 1
         else:
-            alpha_factor = 1.0 / (worker_delay - args.alpha_adaptive2) / args.alpha_adaptive
+            alpha_factor = 1.0 / ( (worker_delay - args.alpha_adaptive2) * args.alpha_adaptive + 1)
             # alpha_factor = math.exp(- (worker_delay-args.alpha_adaptive2) * args.alpha_adaptive)
     else:
         alpha_factor = 1

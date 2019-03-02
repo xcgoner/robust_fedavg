@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l select=1:ncpus=272 -lplace=excl
+#PBS -l select=1:ncpus=112 -lplace=excl
 
 source /opt/intel/compilers_and_libraries_2017/linux/mpi/bin64/mpivars.sh
 source activate mxnet_latest
@@ -10,7 +10,7 @@ export I_MPI_FABRICS=ofi
 export I_MPI_TMI_PROVIDER=psm2
 export HFI_NO_CPUAFFINITY=1
 export I_MPI_FALLBACK=0
-export OMP_NUM_THREADS=34
+export OMP_NUM_THREADS=56
 
 
 ### OPA FABRIC ###

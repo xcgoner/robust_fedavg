@@ -32,12 +32,12 @@ watchfile=$logdir/exp_script_24.log
 
 model="default"
 lr=0.1
-rho=0.01
-alpha=0.9
+rho=0.005
+alpha=0.6
 
-for maxdelay in 30 40 50 60
+for maxdelay in 30 40 50
 do
-    for iterations in 1 2
+    for iterations in 1
     do
         type="power"
         for power in 0.3 0.5 1.0

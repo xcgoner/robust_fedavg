@@ -31,13 +31,12 @@ valdir=$basedir/cifar10_normalized_async/dataset_split_100
 watchfile=$logdir/exp_script_26.log
 
 model="default"
-lr=0.1
-rho=0.01
-alpha=0.9
+rho=0.005
+alpha=0.6
 
 for maxdelay in 8 12 16 20
 do
-    for iterations in 1 2
+    for iterations in 1
     do
         type="power"
         for power in 0.3 0.5 1.0

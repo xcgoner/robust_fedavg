@@ -40,7 +40,8 @@ do
     for iterations in 1
     do
         type="power"
-        for power in 0.3 0.5 1.0
+        # for power in 0.3 0.5 1.0
+        for power in 1.0
         do
             logfile=$logdir/fed_async_cifar10_singlethread_testdelay_${model}_${lr}_${rho}_${alpha}_${maxdelay}_${iterations}_${type}_${power}.txt
 

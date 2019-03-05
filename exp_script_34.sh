@@ -43,7 +43,7 @@ do
         do
             for alpha in 0.5 0.6 0.7 0.8 0.9
             do
-                for iterations in 1 2
+                for iterations in 1
                 do
                     type="hinge"
                     logfile=$logdir/fed_async_cifar10_singlethread_tunehyper_${model}_${lr}_${rho}_${alpha}_${maxdelay}_${iterations}_${type}.txt

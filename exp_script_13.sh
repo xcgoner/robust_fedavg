@@ -65,3 +65,23 @@ do
     done
 done
 
+for lr in 0.05 0.1 0.15
+do
+    for alphadecay in 1
+    do
+        for nbyz in 2 4
+        do
+            for trim in 0
+            do
+                logfile=/homes/cx2/federated/results/fedrob_byz_unbalanced_${lr}_${alphadecay}_${nbyz}_${trim}.txt
+                > $logfile
+                for seed in 337
+                do 
+                    cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile13
+                    mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile13 python /homes/cx2/federated/fedrob/fedrob.py --classes 10 --model default --nsplit 100 --batchsize 50 --nbyz ${nbyz} --trim ${trim} --lr ${lr} --alpha 1 --alpha-decay ${alphadecay} --alpha-decay-epoch 400 --epochs 800 --iterations 1 --seed ${seed} --dir $inputdir --valdir $valdir --log $logfile 2>&1 | tee $watchfile
+                done
+            done
+        done
+    done
+done
+

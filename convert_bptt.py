@@ -76,63 +76,72 @@ if __name__ == '__main__':
         x_test_list.append(data)
         y_test_list.append(target)
 
-    x_train = nd.concat(*x_train_list, dim=0)
-    y_train = nd.concat(*y_train_list, dim=0)
-    x_test = nd.concat(*x_test_list, dim=0)
-    y_test = nd.concat(*y_test_list, dim=0)
+    # x_train = nd.concat(*x_train_list, dim=0)
+    # y_train = nd.concat(*y_train_list, dim=0)
+    # x_test = nd.concat(*x_test_list, dim=0)
+    # y_test = nd.concat(*y_test_list, dim=0)
 
     nd.waitall()
 
-    print(x_train.shape)
-    print(y_train.shape)
-    print(x_test.shape)
-    print(y_test.shape)
+    # print(x_train.shape)
+    # print(y_train.shape)
+    # print(x_test.shape)
+    # print(y_test.shape)
 
-    batch_size = int(math.floor(x_train.shape[0] / bptt / args.nsplit)) * bptt
+    batch_size = int(math.floor(len(x_train_list) / args.nsplit)) 
 
-    nice_n_train = math.ceil(x_train.shape[0] / batch_size) * batch_size
+    nice_n_train = math.ceil(len(x_train_list) / batch_size) * batch_size
 
-    print('n_train: {}, n_val: {}, partition_size: {}, n_train_part: {}'.format(x_train.shape[0], x_test.shape[0], batch_size, nice_n_train // batch_size), flush=True)
+    print('n_train: {}, n_val: {}, partition_size: {}, n_train_part: {}'.format(len(x_train_list), len(x_test_list), batch_size, nice_n_train // batch_size), flush=True)
 
-    # perm = list(range( x_train.shape[0] ))
-    # random.shuffle(perm)
+    perm = list(range( len(x_train_list) ))
+    random.shuffle(perm)
     
-    # x_train = np.array([x_train[index, :] for index in perm])
-    # y_train = np.array([y_train[index, :] for index in perm])
+    x_train_list = [x_train_list[index] for index in perm]
+    y_train_list = [y_train_list[index] for index in perm]
+
+    # save vocab
+    output_train_filename = os.path.join(output_train_dir, "vocab.pkl")
+    with open(output_train_filename, "wb") as f:
+        data = pickle.dumps(vocab)
+        pickle.dump(data, f)
 
     for i in range(int(nice_n_train // batch_size)):
         output_train_filename = os.path.join(output_train_dir, "train_data_%03d.pkl" % i)
         i_start = i * batch_size
         i_end = i_start + batch_size
-        if i_end > x_train.shape[0]:
-            i_end = x_train.shape[0]
-        b = x_train[i_start:i_end, :]
-        l = y_train[i_start:i_end, :]
-        print(b.shape)
-        print(l.shape)
+        if i_end > len(x_train_list):
+            i_end = len(x_train_list)
+        b = x_train_list[i_start:i_end]
+        l = y_train_list[i_start:i_end]
+        # print(b.shape)
+        # print(l.shape)
         print(output_train_filename, flush=True)
         with open(output_train_filename, "wb") as f:
-            pickle.dump([b, l], f)
+            data = pickle.dumps([b, l])
+            pickle.dump(data, f)
 
     if args.nsplitv > 1:
-        batch_size_v = x_test.shape[0] // bptt // args.nsplitv * bptt
+        batch_size_v = len(x_test_list) // args.nsplitv
         for i in range(args.nsplitv):
             output_test_filename = os.path.join(output_val_dir, "val_data_%03d.pkl" % i)
             i_start = i * batch_size_v
             i_end = i_start + batch_size_v
-            if i_end > x_test.shape[0]:
-                i_end = x_test.shape[0]
-            b = x_test[i_start:i_end, :]
-            l = y_test[i_start:i_end, :]
-            print(b.shape)
-            print(l.shape)
+            if i_end > len(x_test_list):
+                i_end = len(x_test_list)
+            b = x_test_list[i_start:i_end]
+            l = y_test_list[i_start:i_end]
+            # print(b.shape)
+            # print(l.shape)
             print(output_test_filename, flush=True)
             with open(output_test_filename, "wb") as f:
-                pickle.dump([b, l], f)
+                data = pickle.dumps([b, l])
+                pickle.dump(data, f)
     else:
         output_test_filename = os.path.join(output_val_dir, "val_data.pkl")
-        print(x_test.shape)
-        print(y_test.shape)
+        # print(x_test.shape)
+        # print(y_test.shape)
         print(output_test_filename, flush=True)
         with open(output_test_filename, "wb") as f:
-            pickle.dump([x_test, y_test], f)
+            data = pickle.dumps([x_test, y_test])
+            pickle.dump(data, f)

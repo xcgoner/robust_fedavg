@@ -101,8 +101,9 @@ if __name__ == '__main__':
     y_train_list = [y_train_list[index] for index in perm]
 
     # save vocab
-    output_train_filename = os.path.join(output_train_dir, "vocab.pkl")
-    with open(output_train_filename, "wb") as f:
+    output_vocab_filename = os.path.join(output_train_dir, "vocab.pkl")
+    print(output_vocab_filename, flush=True)
+    with open(output_vocab_filename, "wb") as f:
         data = pickle.dumps(vocab)
         pickle.dump(data, f)
 

@@ -1,4 +1,4 @@
-import argparse, time, logging, os, math, random, blob
+import argparse, time, logging, os, math, random, glob
 os.environ["MXNET_USE_OPERATOR_TUNING"] = "0"
 
 
@@ -26,7 +26,6 @@ mpi_rank = mpi_comm.Get_rank()
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dir", type=str, help="dir of the data", required=True)
 parser.add_argument("--valdir", type=str, help="dir of the val data", required=True)
-parser.add_argument("--batchsize", type=int, help="batchsize", default=8)
 parser.add_argument("--epochs", type=int, help="epochs", default=100)
 parser.add_argument("--interval", type=int, help="log interval", default=10)
 parser.add_argument("--nsplit", type=int, help="number of split", default=40)
@@ -35,7 +34,7 @@ parser.add_argument("--alpha", type=float, help="moving average", default=1.0)
 parser.add_argument("--alpha-decay", type=float, help="decay factor of alpha", default=0.5)
 parser.add_argument("--alpha-decay-epoch", type=str, help="epoch of alpha decay", default='800')
 parser.add_argument("--log", type=str, help="dir of the log file", default='train_cifar100.log')
-parser.add_argument("--classes", type=int, help="number of classes", default=20)
+# parser.add_argument("--classes", type=int, help="number of classes", default=20)
 parser.add_argument("--iterations", type=int, help="number of local epochs", default=50)
 parser.add_argument("--aggregation", type=str, help="aggregation method", default='mean')
 parser.add_argument("--nbyz", type=int, help="number of Byzantine workers", default=0)
@@ -77,7 +76,7 @@ for filename in sorted(listdir(train_dir)):
 
 context = mx.cpu()
 
-classes = args.classes
+# classes = args.classes
 
 def get_train_batch(train_filename):
     with open(train_filename, "rb") as f:
@@ -116,14 +115,19 @@ for training_file in training_files:
 
 [val_val_X, val_val_Y] = get_val_val_batch(val_val_dir)
 
+vocab_dir = os.path.join(train_dir, 'vocab.pkl')
+with open(vocab_dir, "rb") as f:
+        data = pickle.load(f)
+        vocab = pickle.loads(data)
+
 model_name = args.model
 
 if model_name == 'default':
-    model_kwargs = {'ctx': context, vocab=vocab, dataset_name=None, 'pretrained': False}
-    net, vocab = nlp.model.get_model('standard_lstm_lm_200', **model_kwargs))
+    model_kwargs = {'ctx': context, 'vocab': vocab, 'dataset_name': None, 'pretrained': False}
+    net, vocab = nlp.model.get_model('standard_lstm_lm_200', **model_kwargs)
 else:
-    model_kwargs = {'ctx': context, vocab=vocab, dataset_name=None, 'pretrained': False}
-    net, vocab = nlp.model.get_model(model_name, **model_kwargs))
+    model_kwargs = {'ctx': context, 'vocab': vocab, 'dataset_name': None, 'pretrained': False}
+    net, vocab = nlp.model.get_model(model_name, **model_kwargs)
 
 net.initialize(mx.init.Xavier(), ctx=context)
 
@@ -137,6 +141,7 @@ lr = args.lr
 # optimizer_params = {'momentum': 0.9, 'learning_rate': lr, 'wd': 0.0001}
 optimizer_params = {'momentum': 0.0, 'learning_rate': lr, 'wd': 0.0}
 grad_clip = 0.25
+batch_size = 20
 
 # lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
 alpha_decay_epoch = [int(i) for i in args.alpha_decay_epoch.split(',')]
@@ -145,8 +150,8 @@ trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
 
 loss_func = gluon.loss.SoftmaxCrossEntropyLoss()
 
-train_cross_entropy = mx.metric.CrossEntropy()
-test_cross_entropy = mx.metric.CrossEntropy()
+train_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
+test_cross_entropy = gluon.loss.SoftmaxCrossEntropyLoss()
 
 def detach(hidden):
     if isinstance(hidden, (tuple, list)):
@@ -158,14 +163,13 @@ def detach(hidden):
 def evaluate(model, data_source, batch_size, ctx):
     total_L = 0.0
     ntotal = 0
-    hidden = model.begin_state(
-        batch_size=batch_size, func=mx.nd.zeros, ctx=ctx)
-    for i, (data, target) in enumerate(data_source):
-        data = data.as_in_context(ctx)
-        target = target.as_in_context(ctx)
+    hidden = model.begin_state(batch_size=batch_size, func=mx.nd.zeros, ctx=ctx)
+    for i, (data, target) in enumerate(zip(*data_source)):
+        # data = data.as_in_context(ctx)
+        # target = target.as_in_context(ctx)
         output, hidden = model(data, hidden)
         hidden = detach(hidden)
-        L = loss(output.reshape(-3, -1), target.reshape(-1))
+        L = test_cross_entropy(output.reshape(-3, -1), target.reshape(-1))
         total_L += mx.nd.sum(L).asscalar()
         ntotal += L.size
     return [total_L, ntotal]
@@ -179,15 +183,13 @@ for local_epoch in range(5):
     hiddens = net.begin_state(batch_size, func=mx.nd.zeros, ctx=context)
     for i, (data, target) in enumerate(zip(*train_data)):
         hiddens = detach(hiddens)
-        L = 0
-        Ls = []
         with autograd.record():
             output, h = net(data, hiddens)
-            batch_L = loss(output.reshape(-3, -1), target.reshape(-1,))
-            L = L + batch_L.as_in_context(context) / data.size
+            batch_L = train_cross_entropy(output.reshape(-3, -1), target.reshape(-1,))
+            L = batch_L / data.size
             hiddens = h
         L.backward()
-        grads = [p.grad() for p in model.collect_params().values()]
+        grads = [p.grad() for p in net.collect_params().values()]
         gluon.utils.clip_global_norm(grads, grad_clip)
         trainer.step(1)
 
@@ -262,28 +264,38 @@ for epoch in range(1, args.epochs+1):
         if mpi_rank in byz_worker_list:
             # byz worker
             [byz_train_X, byz_train_Y] = get_train_batch_byz(random.choice(training_files))
-            byz_train_dataset = mx.gluon.data.dataset.ArrayDataset(byz_train_X, byz_train_Y)
-            byz_train_data = gluon.data.DataLoader(byz_train_dataset, batch_size=args.batchsize, shuffle=True, last_batch='rollover', num_workers=1)
             net.initialize(mx.init.MSRAPrelu(), ctx=context, force_reinit=True)
             for local_epoch in range(args.iterations):
-                for i, (data, label) in enumerate(byz_train_data):
-                    with ag.record():
-                        outputs = net(data)
-                        loss = loss_func(outputs, label)
-                    loss.backward()
-                    trainer.step(args.batchsize)
+                hiddens = net.begin_state(batch_size, func=mx.nd.zeros, ctx=context)
+                for i, (data, target) in enumerate(zip(byz_train_X, byz_train_Y)):
+                    hiddens = detach(hiddens)
+                    with autograd.record():
+                        output, h = net(data, hiddens)
+                        batch_L = train_cross_entropy(output.reshape(-3, -1), target.reshape(-1,))
+                        L = batch_L / data.size
+                        hiddens = h
+                    L.backward()
+                    grads = [p.grad() for p in net.collect_params().values()]
+                    gluon.utils.clip_global_norm(grads, grad_clip)
+                    trainer.step(1)
         else:
             # train
             # local epoch
             for local_epoch in range(args.iterations):
                 if args.iid == 1:
                     train_data = random.choice(train_data_list)
-                for i, (data, label) in enumerate(train_data):
-                    with ag.record():
-                        outputs = net(data)
-                        loss = loss_func(outputs, label)
-                    loss.backward()
-                    trainer.step(args.batchsize)
+                hiddens = net.begin_state(batch_size, func=mx.nd.zeros, ctx=context)
+                for i, (data, target) in enumerate(zip(*train_data)):
+                    hiddens = detach(hiddens)
+                    with autograd.record():
+                        output, h = net(data, hiddens)
+                        batch_L = train_cross_entropy(output.reshape(-3, -1), target.reshape(-1,))
+                        L = batch_L / data.size
+                        hiddens = h
+                    L.backward()
+                    grads = [p.grad() for p in net.collect_params().values()]
+                    gluon.utils.clip_global_norm(grads, grad_clip)
+                    trainer.step(1)
         
         # aggregation
         nd.waitall()
@@ -314,32 +326,17 @@ for epoch in range(1, args.epochs+1):
         toc = time.time()
 
         if  ( epoch % args.interval == 0 or epoch == args.epochs-1 ) :
-            acc_top1.reset()
-            acc_top5.reset()
-            train_cross_entropy.reset()
-            for i, (data, label) in enumerate(val_val_data):
-                outputs = net(data)
-                acc_top1.update(label, outputs)
-                acc_top5.update(label, outputs)
+            train_result = evaluate(net, [val_train_X, val_train_Y], batch_size, context)
+            test_result = evaluate(net, [val_val_X, val_val_Y], batch_size, context)
 
-            for i, (data, label) in enumerate(val_train_data):
-                outputs = net(data)
-                train_cross_entropy.update(label, nd.softmax(outputs))
-
-            _, top1 = acc_top1.get()
-            _, top5 = acc_top5.get()
-            _, crossentropy = train_cross_entropy.get()
-
-            top1_list = mpi_comm.gather(top1, root=0)
-            top5_list = mpi_comm.gather(top5, root=0)
-            crossentropy_list = mpi_comm.gather(crossentropy, root=0)
+            train_result_list = mpi_comm.gather(train_result, root=0)
+            test_result_list = mpi_comm.gather(test_result, root=0)
 
             if mpi_rank == 0:
-                top1_list = np.array(top1_list)
-                top5_list = np.array(top5_list)
-                crossentropy_list = np.array(crossentropy_list)
+                train_result = np.array(train_result_list)
+                test_result = np.array(test_result_list)
 
-                logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f, loss=%f, lr=%f, alpha=%f, time=%f, elapsed=%f'%(epoch, top1_list.mean(), top5_list.mean(), crossentropy_list.mean(), trainer.learning_rate, alpha, toc-tic, time.time()-time_0))
+                logger.info('[Epoch %d] validation: train loss=%f, val loss=%f, lr=%f, alpha=%f, time=%f, elapsed=%f'%(epoch, np.sum(train_result[:,0])/np.sum(train_result[:,1]), np.sum(test_result[:,0])/np.sum(test_result[:,1]), trainer.learning_rate, alpha, toc-tic, time.time()-time_0))
                 # logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f'%(epoch, top1, top5))
 
                 if args.save == 1:

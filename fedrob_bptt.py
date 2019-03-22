@@ -214,7 +214,7 @@ alpha = args.alpha
 
 randperm_choice_list = []
 randperm_list = [i for i in range(args.nsplit)]
-for i in range(int(math.ceil(args.epochs * mpi_size / args.nsplit))):
+for i in range(int(math.ceil(args.epochs * mpi_size / args.nsplit) * 2)):
     random.shuffle(randperm_list)
     randperm_choice_list = randperm_choice_list + randperm_list
 
@@ -325,7 +325,7 @@ for epoch in range(1, args.epochs+1):
 
         toc = time.time()
 
-        if  ( epoch % args.interval == 0 or epoch == args.epochs-1 ) :
+        if epoch % args.interval == 0 :
             train_result = evaluate(net, [val_train_X, val_train_Y], batch_size, context)
             test_result = evaluate(net, [val_val_X, val_val_Y], batch_size, context)
 

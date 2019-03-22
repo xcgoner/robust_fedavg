@@ -335,8 +335,9 @@ for epoch in range(1, args.epochs+1):
             if mpi_rank == 0:
                 train_result = np.array(train_result_list)
                 test_result = np.array(test_result_list)
-
-                logger.info('[Epoch %d] validation: train loss=%f, val loss=%f, lr=%f, alpha=%f, time=%f, elapsed=%f'%(epoch, np.sum(train_result[:,0])/np.sum(train_result[:,1]), np.sum(test_result[:,0])/np.sum(test_result[:,1]), trainer.learning_rate, alpha, toc-tic, time.time()-time_0))
+                train_loss = np.sum(train_result[:,0])/np.sum(train_result[:,1])
+                test_loss = np.sum(test_result[:,0])/np.sum(test_result[:,1])
+                logger.info('[Epoch %d] validation: train loss=%f, train ppl=%.2f, val loss=%f, test ppl=%.2f, lr=%f, alpha=%f, time=%f, elapsed=%f'%(epoch, train_loss, math.exp(train_loss), test_loss, math.exp(test_loss), trainer.learning_rate, alpha, toc-tic, time.time()-time_0))
                 # logger.info('[Epoch %d] validation: acc-top1=%f acc-top5=%f'%(epoch, top1, top5))
 
                 if args.save == 1:

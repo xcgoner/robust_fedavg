@@ -28,11 +28,28 @@ valdir=/homes/cx2/datasets/cifar10_normalized/dataset_split_10
 watchfile=/homes/cx2/federated/results/exp_script_19.log
 
 
-for lr in 0.05 0.1
+# for lr in 0.05 0.1
+# do
+#     for alpha in 0.6 0.5
+#     do
+#         for iteration in 2 3 4 5
+#         do
+#             logfile=/homes/cx2/federated/results/fedrob_nobyz_balanced_tune_iteration_${lr}_${alpha}_${iteration}.txt
+#             > $logfile
+#             for seed in 337 773 557 755 
+#             do 
+#                 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile19
+#                 mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile19 python /homes/cx2/federated/fedrob/fedrob.py --classes 10 --model default --nsplit 100 --batchsize 50 --nbyz 0 --lr ${lr} --alpha ${alpha} --alpha-decay 1 --alpha-decay-epoch 400 --epochs 800 --iterations ${iteration} --seed ${seed} --dir $inputdir --valdir $valdir --log $logfile 2>&1 | tee $watchfile
+#             done
+#         done
+#     done
+# done
+
+for lr in 0.1
 do
-    for alpha in 0.6 0.5
+    for alpha in 0.5
     do
-        for iteration in 2 3 4 5
+        for iteration in 5
         do
             logfile=/homes/cx2/federated/results/fedrob_nobyz_balanced_tune_iteration_${lr}_${alpha}_${iteration}.txt
             > $logfile

@@ -39,8 +39,8 @@ parser.add_argument("--iterations", type=int, help="number of local epochs", def
 parser.add_argument("--aggregation", type=str, help="aggregation method", default='mean')
 parser.add_argument("--nbyz", type=int, help="number of Byzantine workers", default=0)
 parser.add_argument("--trim", type=int, help="number of trimmed workers on one side", default=0)
-# parser.add_argument("--lr-decay", type=float, help="lr decay rate", default=0.1)
-# parser.add_argument("--lr-decay-epoch", type=str, help="lr decay epoch", default='400')
+parser.add_argument("--lr-decay", type=float, help="lr decay rate", default=0.5)
+parser.add_argument("--lr-decay-epoch", type=str, help="lr decay epoch", default='2000')
 parser.add_argument("--iid", type=int, help="IID setting", default=0)
 parser.add_argument("--model", type=str, help="model", default='mobilenetv2_1.0')
 parser.add_argument("--save", type=int, help="save", default=0)
@@ -143,7 +143,7 @@ optimizer_params = {'momentum': 0.0, 'learning_rate': lr, 'wd': 0.0}
 grad_clip = 0.25
 batch_size = 20
 
-# lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
+lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
 alpha_decay_epoch = [int(i) for i in args.alpha_decay_epoch.split(',')]
 
 trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
@@ -225,8 +225,8 @@ time_0 = time.time()
 for epoch in range(1, args.epochs+1):
         # train_metric.reset()
 
-        # if epoch in lr_decay_epoch:
-        #     lr = lr * args.lr_decay
+        if epoch in lr_decay_epoch:
+            lr = lr * args.lr_decay
 
         if epoch in alpha_decay_epoch:
             alpha = alpha * args.alpha_decay

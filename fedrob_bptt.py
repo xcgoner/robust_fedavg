@@ -89,8 +89,6 @@ def get_train_batch_byz(train_filename):
     with open(train_filename, "rb") as f:
         data = pickle.load(f)
         data = pickle.loads(data)
-    print(type(data))
-    print(type(data[1]))
     for target in data[1]:
         target[:] = nd.relu(target - 1000)
     return data[0], data[1]

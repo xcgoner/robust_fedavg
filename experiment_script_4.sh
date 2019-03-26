@@ -33,4 +33,4 @@ logfile=/homes/cx2/federated/results/fedrob_4.txt
 > $logfile
 
 cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile
-mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/fedrob/fedrob_bptt.py --model default --nsplit 100 --nbyz 0 --trim 0 --lr 40 --lr-decay 0.5 --lr-decay-epoch 200 --alpha 1 --alpha-decay 0.9 --alpha-decay-epoch 600 --epochs 1000 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir --log $logfile 2>&1 | tee $watchfile
+mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile python /homes/cx2/federated/fedrob/fedrob_bptt.py --model default --nsplit 100 --nbyz 0 --trim 0 --lr 40 --lr-decay 0.5 --lr-decay-epoch 200,1000 --alpha 1 --alpha-decay 0.8 --alpha-decay-epoch 600 --epochs 2000 --iterations 1 --seed 733 --dir $inputdir --valdir $valdir --log $logfile 2>&1 | tee $watchfile

@@ -72,7 +72,8 @@ val_val_dir = os.path.join(args.valdir, 'val')
 training_files = []
 for filename in sorted(listdir(train_dir)):
     absolute_filename = os.path.join(train_dir, filename)
-    training_files.append(absolute_filename)
+    if filename != 'vocab.pkl':
+        training_files.append(absolute_filename)
 
 context = mx.cpu()
 
@@ -88,7 +89,9 @@ def get_train_batch_byz(train_filename):
     with open(train_filename, "rb") as f:
         data = pickle.load(f)
         data = pickle.loads(data)
-    for target in data [1]:
+    print(type(data))
+    print(type(data[1]))
+    for target in data[1]:
         target[:] = nd.relu(target - 1000)
     return data[0], data[1]
 

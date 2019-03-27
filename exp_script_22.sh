@@ -29,7 +29,7 @@ watchfile=/homes/cx2/federated/results/exp_script_22.log
 
 lr=40
 nbyz=0
-trim=3
+trim=1
 
 # for lr in 0.05 0.1 0.15
 for alphadecay in 1 0.8 0.6

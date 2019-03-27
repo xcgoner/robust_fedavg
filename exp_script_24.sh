@@ -28,8 +28,8 @@ valdir=/homes/cx2/datasets/wikitext2_normalized/dataset_split_10
 watchfile=/homes/cx2/federated/results/exp_script_24.log
 
 lr=40
-nbyz=2
-trim=2
+nbyz=1
+trim=1
 
 # for lr in 0.05 0.1 0.15
 for alphadecay in 1 0.8 0.6

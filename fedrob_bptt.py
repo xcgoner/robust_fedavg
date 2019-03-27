@@ -283,7 +283,7 @@ for epoch in range(1, args.epochs+1):
             for param, param_prev in zip(net.collect_params().values(), byz_params_prev):
                 if param.grad_req != 'null':
                     weight = param.data()
-                    weight[:] = param_prev + (weight - param_prev) * 10
+                    weight[:] = param_prev + (weight - param_prev) * 1000
         else:
             # train
             # local epoch

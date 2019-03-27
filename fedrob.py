@@ -319,6 +319,7 @@ for epoch in range(args.start_epoch+1, args.epochs):
             byz_train_dataset = mx.gluon.data.dataset.ArrayDataset(byz_train_X, byz_train_Y)
             byz_train_data = gluon.data.DataLoader(byz_train_dataset, batch_size=args.batchsize, shuffle=True, last_batch='rollover', num_workers=1)
             net.initialize(mx.init.MSRAPrelu(), ctx=context, force_reinit=True)
+            byz_params_prev = [param.data().copy() for param in net.collect_params().values()]
             for local_epoch in range(args.iterations):
                 for i, (data, label) in enumerate(byz_train_data):
                     with ag.record():
@@ -326,6 +327,10 @@ for epoch in range(args.start_epoch+1, args.epochs):
                         loss = loss_func(outputs, label)
                     loss.backward()
                     trainer.step(args.batchsize)
+            for param, param_prev in zip(net.collect_params().values(), byz_params_prev):
+                if param.grad_req != 'null':
+                    weight = param.data()
+                    weight[:] = param_prev + (weight - param_prev) * 5
         else:
             # train
             # local epoch

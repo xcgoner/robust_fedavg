@@ -28,7 +28,7 @@ valdir=/homes/cx2/datasets/wikitext2_normalized/dataset_split_10
 watchfile=/homes/cx2/federated/results/exp_script_24.log
 
 lr=40
-nbyz=1
+nbyz=2
 trim=3
 
 # for lr in 0.05 0.1 0.15

@@ -65,17 +65,37 @@ watchfile=/homes/cx2/federated/results/exp_script_12.log
 #     done
 # done
 
-for lr in 0.05 0.1 0.15
+# for lr in 0.05 0.1 0.15
+# do
+#     for alphadecay in 0.6
+#     do
+#         for nbyz in 2 4
+#         do
+#             for trim in 0
+#             do
+#                 logfile=/homes/cx2/federated/results/fedrob_byz_balanced_${lr}_${alphadecay}_${nbyz}_${trim}.txt
+#                 > $logfile
+#                 for seed in 337
+#                 do 
+#                     cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile12
+#                     mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile12 python /homes/cx2/federated/fedrob/fedrob.py --classes 10 --model default --nsplit 100 --batchsize 50 --nbyz ${nbyz} --trim ${trim} --lr ${lr} --alpha 1 --alpha-decay ${alphadecay} --alpha-decay-epoch 400 --epochs 800 --iterations 1 --seed ${seed} --dir $inputdir --valdir $valdir --log $logfile 2>&1 | tee $watchfile
+#                 done
+#             done
+#         done
+#     done
+# done
+
+for lr in 0.1
 do
-    for alphadecay in 0.6
+    for alphadecay in 1 0.8 0.6
     do
-        for nbyz in 2 4
+        for nbyz in 4
         do
-            for trim in 0
+            for trim in 4
             do
-                logfile=/homes/cx2/federated/results/fedrob_byz_balanced_${lr}_${alphadecay}_${nbyz}_${trim}.txt
+                logfile=/homes/cx2/federated/results/fedrob_byz1_balanced_${lr}_${alphadecay}_${nbyz}_${trim}.txt
                 > $logfile
-                for seed in 337
+                for seed in 337 773 557 755
                 do 
                     cat $PBS_NODEFILE | uniq > $PBS_O_WORKDIR/hostfile12
                     mpirun -np 10 -machinefile $PBS_O_WORKDIR/hostfile12 python /homes/cx2/federated/fedrob/fedrob.py --classes 10 --model default --nsplit 100 --batchsize 50 --nbyz ${nbyz} --trim ${trim} --lr ${lr} --alpha 1 --alpha-decay ${alphadecay} --alpha-decay-epoch 400 --epochs 800 --iterations 1 --seed ${seed} --dir $inputdir --valdir $valdir --log $logfile 2>&1 | tee $watchfile

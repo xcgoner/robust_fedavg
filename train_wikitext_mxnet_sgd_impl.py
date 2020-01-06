@@ -139,17 +139,25 @@ trainer.set_learning_rate(lr)
 
 parameters = net.collect_params().values()
 
+train_data_list = []
+for i, (data, target) in enumerate(train_data):
+    data_list = gluon.utils.split_and_load(data, context,
+                                                batch_axis=1, even_split=True)
+    target_list = gluon.utils.split_and_load(target, context,
+                                                batch_axis=1, even_split=True)
+    train_data_list.append([data_list, target_list])
+print('data cached')
+
 tic = time.time()
 for epoch in range(args.epochs):
 
     # train    
     hiddens = [net.begin_state(batch_size//len(context), func=mx.nd.zeros, ctx=ctx)
                 for ctx in context]
-    for i, (data, target) in enumerate(train_data):
-        data_list = gluon.utils.split_and_load(data, context,
-                                                batch_axis=1, even_split=True)
-        target_list = gluon.utils.split_and_load(target, context,
-                                                    batch_axis=1, even_split=True)
+    random.shuffle(train_data_list)
+    for i, data in enumerate(train_data_list):
+        data_list = data[0]
+        target_list = data[1]
         hiddens = detach(hiddens)
         L = 0
         Ls = []

@@ -113,7 +113,7 @@ def evaluate(model, data_source, batch_size, ctx):
         target = target.as_in_context(ctx)
         output, hidden = model(data, hidden)
         hidden = detach(hidden)
-        L = loss(output.reshape(-3, -1), target.reshape(-1))
+        L = loss_func(output.reshape(-3, -1), target.reshape(-1))
         total_L += mx.nd.sum(L).asscalar()
         ntotal += L.size
     return total_L / ntotal

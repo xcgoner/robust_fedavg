@@ -87,7 +87,7 @@ net.initialize(mx.init.Xavier(), ctx=context)
 # SGD optimizer
 optimizer = 'sgd'
 lr = args.lr
-optimizer_params = {'momentum': args.momentum, 'learning_rate': lr, 'wd': 0.0001}
+optimizer_params = {'momentum': args.momentum, 'learning_rate': lr, 'wd': 0}
 # optimizer_params = {'momentum': 0.0, 'learning_rate': lr, 'wd': 0.0}
 
 # lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
@@ -120,7 +120,7 @@ def evaluate(model, data_source, batch_size, ctx):
 
 # warmup
 # print('warm up', flush=True)
-# trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
+trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
 # trainer.set_learning_rate(0.01)
 # [train_X, train_Y] = get_train_batch(training_files[0])
 # train_dataset = mx.gluon.data.dataset.ArrayDataset(train_X, train_Y)

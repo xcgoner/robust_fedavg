@@ -44,6 +44,7 @@ logger.addHandler(streamhandler)
 
 bptt = 35
 grad_clip = 0.25
+batch_size = args.batchsize
 
 # set random seed
 mx.random.seed(args.seed)
@@ -118,21 +119,21 @@ def evaluate(model, data_source, batch_size, ctx):
     return total_L / ntotal
 
 # warmup
-print('warm up', flush=True)
-trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
-trainer.set_learning_rate(0.01)
-[train_X, train_Y] = get_train_batch(training_files[0])
-train_dataset = mx.gluon.data.dataset.ArrayDataset(train_X, train_Y)
-train_data = gluon.data.DataLoader(train_dataset, batch_size=args.batchsize, shuffle=True, last_batch='rollover', num_workers=1)
-for local_epoch in range(5):
-    for i, (data, label) in enumerate(train_data):
-        with ag.record():
-            outputs = net(data)
-            loss = loss_func(outputs, label)
-        loss.backward()
-        trainer.step(args.batchsize)
+# print('warm up', flush=True)
+# trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
+# trainer.set_learning_rate(0.01)
+# [train_X, train_Y] = get_train_batch(training_files[0])
+# train_dataset = mx.gluon.data.dataset.ArrayDataset(train_X, train_Y)
+# train_data = gluon.data.DataLoader(train_dataset, batch_size=args.batchsize, shuffle=True, last_batch='rollover', num_workers=1)
+# for local_epoch in range(5):
+#     for i, (data, label) in enumerate(train_data):
+#         with ag.record():
+#             outputs = net(data)
+#             loss = loss_func(outputs, label)
+#         loss.backward()
+#         trainer.step(args.batchsize)
 
-nd.waitall()
+# nd.waitall()
 
 trainer.set_learning_rate(lr)
 

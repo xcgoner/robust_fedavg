@@ -143,7 +143,7 @@ tic = time.time()
 for epoch in range(args.epochs):
 
     # train    
-    hiddens = [model.begin_state(batch_size//len(context), func=mx.nd.zeros, ctx=ctx)
+    hiddens = [net.begin_state(batch_size//len(context), func=mx.nd.zeros, ctx=ctx)
                 for ctx in context]
     for i, (data, target) in enumerate(train_data):
         data_list = gluon.utils.split_and_load(data, context,
@@ -171,7 +171,7 @@ for epoch in range(args.epochs):
     
     # validation
     if  epoch % args.interval == 0 or epoch == args.epochs-1:
-        val_L = evaluate(model, test_data, batch_size, context[0])
+        val_L = evaluate(net, test_data, batch_size, context[0])
 
         logger.info('[Epoch %d] test: loss=%f, ppl=%f, lr=%f, time=%f' % (epoch, val_L, math.exp(val_L), trainer.learning_rate, time.time()-tic))
         tic = time.time()

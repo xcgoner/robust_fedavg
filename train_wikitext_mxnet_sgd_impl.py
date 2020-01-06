@@ -32,7 +32,7 @@ parser.add_argument("--seed", type=int, help="random seed", default=733)
  
 args = parser.parse_args()
 
-# print(args, flush=True)
+print(args, flush=True)
 
 filehandler = logging.FileHandler(args.log)
 streamhandler = logging.StreamHandler()

@@ -118,6 +118,15 @@ def evaluate(model, data_source, batch_size, ctx):
         ntotal += L.size
     return total_L / ntotal
 
+train_data_list = []
+for i, (data, target) in enumerate(train_data):
+    data_list = gluon.utils.split_and_load(data, context,
+                                                batch_axis=1, even_split=True)
+    target_list = gluon.utils.split_and_load(target, context,
+                                                batch_axis=1, even_split=True)
+    train_data_list.append([data_list, target_list])
+print('data cached')
+
 # warmup
 print('warm up', flush=True)
 trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
@@ -150,17 +159,9 @@ nd.waitall()
 
 parameters = net.collect_params().values()
 
-train_data_list = []
-for i, (data, target) in enumerate(train_data):
-    data_list = gluon.utils.split_and_load(data, context,
-                                                batch_axis=1, even_split=True)
-    target_list = gluon.utils.split_and_load(target, context,
-                                                batch_axis=1, even_split=True)
-    train_data_list.append([data_list, target_list])
-print('data cached')
-
 tic = time.time()
 best_val = float("Inf")
+n_grads = 0
 for epoch in range(args.epochs):
 
     trainer.set_learning_rate(lr)
@@ -188,6 +189,7 @@ for epoch in range(args.epochs):
         gluon.utils.clip_global_norm(grads, grad_clip)
 
         trainer.step(1)
+        n_grads += 1
     
     nd.waitall()
     
@@ -195,7 +197,7 @@ for epoch in range(args.epochs):
     if  epoch % args.interval == 0 or epoch == args.epochs-1:
         val_L = evaluate(net, test_data, batch_size, context[0])
 
-        logger.info('[Epoch %d] test: loss=%f, ppl=%f, lr=%f, time=%f' % (epoch, val_L, math.exp(val_L), trainer.learning_rate, time.time()-tic))
+        logger.info('[Epoch %d] test: loss=%f, ppl=%f, grads=%f, lr=%f, time=%f' % (epoch, val_L, math.exp(val_L), n_grads, trainer.learning_rate, time.time()-tic))
         tic = time.time()
         
         nd.waitall()

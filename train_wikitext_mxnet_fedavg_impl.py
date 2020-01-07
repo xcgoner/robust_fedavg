@@ -138,25 +138,28 @@ trainer.set_learning_rate(0.1)
 hiddens = [net.begin_state(batch_size//len(context), func=mx.nd.zeros, ctx=ctx)
             for ctx in context]
 random.shuffle(train_data_list)
-for i, data in enumerate(train_data_list[0]):
-    data_list = data[0]
-    target_list = data[1]
-    hiddens = detach(hiddens)
-    L = 0
-    Ls = []
+for w in range(n_devices):
+    train_worker_data = train_data_list[w]
+    random.shuffle(train_worker_data)
+    for i, data in enumerate(train_worker_data):
+        data_list = data[0]
+        target_list = data[1]
+        hiddens = detach(hiddens)
+        L = 0
+        Ls = []
 
-    with autograd.record():
-        for j, (X, y, h) in enumerate(zip(data_list, target_list, hiddens)):
-            output, h = net(X, h)
-            batch_L = loss_func(output.reshape(-3, -1), y.reshape(-1,))
-            L = L + batch_L.as_in_context(context[0]) / (len(context) * X.size)
-            Ls.append(batch_L / (len(context) * X.size))
-            hiddens[j] = h
-    L.backward()
-    grads = [p.grad(x.context) for p in parameters for x in data_list]
-    gluon.utils.clip_global_norm(grads, grad_clip)
+        with autograd.record():
+            for j, (X, y, h) in enumerate(zip(data_list, target_list, hiddens)):
+                output, h = net(X, h)
+                batch_L = loss_func(output.reshape(-3, -1), y.reshape(-1,))
+                L = L + batch_L.as_in_context(context[0]) / (len(context) * X.size)
+                Ls.append(batch_L / (len(context) * X.size))
+                hiddens[j] = h
+        L.backward()
+        grads = [p.grad(x.context) for p in parameters for x in data_list]
+        gluon.utils.clip_global_norm(grads, grad_clip)
 
-    trainer.step(1)
+        trainer.step(1)
     
 nd.waitall()
 

@@ -127,6 +127,8 @@ for i, (data, target) in enumerate(train_data):
     train_data_list.append([data_list, target_list])
 print('data cached')
 
+parameters = net.collect_params().values()
+
 # warmup
 print('warm up', flush=True)
 trainer = gluon.Trainer(net.collect_params(), optimizer, optimizer_params)
@@ -156,8 +158,6 @@ for i, data in enumerate(train_data_list):
     trainer.step(1)
     
 nd.waitall()
-
-parameters = net.collect_params().values()
 
 tic = time.time()
 best_val = float("Inf")

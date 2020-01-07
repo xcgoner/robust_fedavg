@@ -24,7 +24,6 @@ parser.add_argument("--nsplit", type=int, help="number of split", default=100)
 parser.add_argument("--nworkers", type=int, help="number of workers", default=10)
 parser.add_argument("--iterations", type=int, help="number of local epochs", default=2000)
 parser.add_argument("-v", "--interval", type=int, help="log interval (epochs)", default=20)
-parser.add_argument("-n", "--nsplit", type=int, help="number of split", default=40)
 parser.add_argument("-l", "--lr", type=float, help="learning rate", default=20)
 parser.add_argument("--momentum", type=float, help="momentum", default=0)
 parser.add_argument("-o", "--log", type=str, help="dir of the log file", default='train_wikitext.log')
@@ -208,7 +207,7 @@ for epoch in range(args.iterations):
 
         for p, w_p in zip(parameters, worker_params[w]):
             if p.grad_req != 'null':
-                w_p.data()[:] = p
+                w_p.data()[:] = p / n_workers
         
         nd.waitall()
     
@@ -219,11 +218,11 @@ for epoch in range(args.iterations):
     for w in range(n_workers):
         for p, w_p in zip(parameters, worker_params[w]):
             if p.grad_req != 'null':
-                p[:] += (w_p / n_workers)
+                p[:] += w_p
     for w in range(n_workers):
         for p, w_p in zip(parameters, worker_params[w]):
             if p.grad_req != 'null':
-                w_p[:] += p
+                w_p[:] = p
     nd.waitall()
             
     

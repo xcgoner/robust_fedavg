@@ -182,7 +182,7 @@ for epoch in range(args.iterations):
                     for ctx in context]
         for p, w_p in zip(parameters, worker_params[w]):
             if p.grad_req != 'null':
-                p.data()[:] = w_p
+                p.data()[:] = w_p.data()
         for i, data in enumerate(train_worker_data):
             data_list = data[0]
             target_list = data[1]
@@ -206,22 +206,22 @@ for epoch in range(args.iterations):
 
         for p, w_p in zip(parameters, worker_params[w]):
             if p.grad_req != 'null':
-                w_p.data()[:] = p / n_workers
+                w_p.data()[:] = p.data() / n_workers
         
         nd.waitall()
     
     # synchronization
     for p in parameters:
         if p.grad_req != 'null':
-            p[:] = 0
+            p.data()[:] = 0
     for w in range(n_workers):
         for p, w_p in zip(parameters, worker_params[w]):
             if p.grad_req != 'null':
-                p[:] += w_p
+                p.data()[:] += w_p.data()
     for w in range(n_workers):
         for p, w_p in zip(parameters, worker_params[w]):
             if p.grad_req != 'null':
-                w_p[:] = p
+                w_p.data()[:] = p.data()
     nd.waitall()
             
     

@@ -27,7 +27,6 @@ parser.add_argument("-v", "--interval", type=int, help="log interval (epochs)", 
 parser.add_argument("-l", "--lr", type=float, help="learning rate", default=20)
 parser.add_argument("--momentum", type=float, help="momentum", default=0)
 parser.add_argument("-o", "--log", type=str, help="dir of the log file", default='train_wikitext.log')
-parser.add_argument("-i", "--iterations", type=int, help="number of local epochs", default=50)
 parser.add_argument("--model", type=str, help="model", default='standard_lstm_lm_200')
 parser.add_argument("--seed", type=int, help="random seed", default=733)
  
@@ -227,7 +226,7 @@ for epoch in range(args.iterations):
             
     
     # validation
-    if  epoch % args.interval == 0 or epoch == args.epochs-1:
+    if  epoch % args.interval == 0 or epoch == args.iterations-1:
         val_L = evaluate(net, test_data, batch_size, context[0])
 
         logger.info('[Epoch %d] test: loss=%f, ppl=%f, grads=%f, lr=%f, time=%f' % (epoch, val_L, math.exp(val_L), n_grads, trainer.learning_rate, time.time()-tic))

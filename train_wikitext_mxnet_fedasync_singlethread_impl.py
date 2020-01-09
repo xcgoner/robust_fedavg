@@ -192,7 +192,7 @@ for epoch in range(args.iterations):
     trainer.set_learning_rate(lr)
 
     # alpha decay
-    if epoch in alpha_decay_epoch:
+    if epoch in args.alpha_decay_epoch:
         alpha = alpha * args.alpha_decay
 
     # obtain previous model

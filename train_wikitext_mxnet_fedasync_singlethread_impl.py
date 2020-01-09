@@ -42,7 +42,7 @@ parser.add_argument("--max-delay", type=int, help="maximum of global delay", def
  
 args = parser.parse_args()
 
-# print(args, flush=True)
+print(args, flush=True)
 
 filehandler = logging.FileHandler(args.log)
 streamhandler = logging.StreamHandler()

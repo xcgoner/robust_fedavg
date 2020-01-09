@@ -6,7 +6,7 @@ import numpy as np
 from scipy import stats
 import mxnet as mx
 from mxnet import gluon, nd
-from mxnet import autograd as ag
+from mxnet import autograd
 from mxnet.gluon import nn
 from mxnet.gluon.utils import download
 

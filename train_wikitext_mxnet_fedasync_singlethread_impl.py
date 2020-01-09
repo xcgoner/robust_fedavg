@@ -100,6 +100,8 @@ optimizer_params = {'momentum': args.momentum, 'learning_rate': lr, 'wd': 0}
 # optimizer_params = {'momentum': 0.0, 'learning_rate': lr, 'wd': 0.0}
 
 # lr_decay_epoch = [int(i) for i in args.lr_decay_epoch.split(',')]
+alpha_decay_epoch = [int(i) for i in args.alpha_decay_epoch.split(',')]
+
 
 loss_func = gluon.loss.SoftmaxCrossEntropyLoss()
 
@@ -192,7 +194,7 @@ for epoch in range(args.iterations):
     trainer.set_learning_rate(lr)
 
     # alpha decay
-    if epoch in args.alpha_decay_epoch:
+    if epoch in alpha_decay_epoch:
         alpha = alpha * args.alpha_decay
 
     # obtain previous model

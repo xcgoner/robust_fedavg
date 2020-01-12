@@ -40,8 +40,6 @@ parser.add_argument("--max-delay", type=int, help="maximum of global delay", def
  
 args = parser.parse_args()
 
-logger.info(args)
-
 filehandler = logging.FileHandler(args.log)
 streamhandler = logging.StreamHandler()
 
@@ -49,6 +47,8 @@ logger = logging.getLogger('')
 logger.setLevel(logging.INFO)
 logger.addHandler(filehandler)
 logger.addHandler(streamhandler)
+
+logger.info(args)
 
 bptt = 35
 grad_clip = 0.25

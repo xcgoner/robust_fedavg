@@ -25,7 +25,7 @@ parser.add_argument("-n", "--nsplit", type=int, help="number of split", default=
 parser.add_argument("-l", "--lr", type=float, help="learning rate", default=20)
 parser.add_argument("--momentum", type=float, help="momentum", default=0)
 # instead of define the weight of the regularization, we define lr * regularization weight, this option is equivalent to \gamma \times \rho in the paper
-parser.add_argument("--rho", type=float, help="regularization \times lr", default=0.00001)
+parser.add_argument("--rho", type=float, help="regularization \times lr", default=0.005)
 parser.add_argument("--alpha", type=float, help="mixing hyperparameter", default=0.9)
 parser.add_argument("-o", "--log", type=str, help="dir of the log file", default='train_cifar100.log')
 parser.add_argument("-i", "--iterations", type=int, help="number of local epochs", default=4000)
@@ -40,7 +40,7 @@ parser.add_argument("--max-delay", type=int, help="maximum of global delay", def
  
 args = parser.parse_args()
 
-print(args, flush=True)
+logger.info(args)
 
 filehandler = logging.FileHandler(args.log)
 streamhandler = logging.StreamHandler()

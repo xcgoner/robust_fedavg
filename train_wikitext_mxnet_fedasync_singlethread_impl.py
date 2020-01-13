@@ -30,7 +30,7 @@ parser.add_argument("--alpha", type=float, help="mixing hyperparameter", default
 parser.add_argument("-o", "--log", type=str, help="dir of the log file", default='train_cifar100.log')
 parser.add_argument("-i", "--iterations", type=int, help="number of local epochs", default=4000)
 parser.add_argument("--alpha-decay", type=float, help="alpha decay rate", default=0.5)
-parser.add_argument("--alpha-decay-epoch", type=str, help="alpha decay epoch", default='3000')
+parser.add_argument("--alpha-decay-epoch", type=str, help="alpha decay epoch", default='2000')
 parser.add_argument("--alpha-adaptive", type=float, help="adaptive mixing hyperparameter", default=0)
 parser.add_argument("--alpha-adaptive2", type=float, help="adaptive mixing hyperparameter2", default=1)
 parser.add_argument("--alpha-type", type=str, help="type of adaptive alpha", default='none')

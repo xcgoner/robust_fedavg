@@ -20,7 +20,7 @@ import pickle
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-b", "--batchsize", type=int, help="batchsize", default=20)
-parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=20)
+parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=40)
 parser.add_argument("-v", "--interval", type=int, help="log interval (epochs)", default=1)
 parser.add_argument("-n", "--nsplit", type=int, help="number of split", default=40)
 parser.add_argument("-l", "--lr", type=float, help="learning rate", default=20)

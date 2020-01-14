@@ -14,7 +14,7 @@ maxdelay=16
 alpha=0.8
 atype="hinge"
 a=10
-b=2
+b=4
 logfile=results/fed_async_wikitext_fedasync_${lr}_${rho}_${maxdelay}_${atype}_${alpha}.log
 
 python train_wikitext_mxnet_fedasync_singlethread_impl.py --rho ${rho} \
